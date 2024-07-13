@@ -1,0 +1,41 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+// Co-simulation settings including step size, maximal duration, and pacing options
+message SimulationSettings
+{
+  // Simulation step size (should be > 0 with default value of 1/60 second).
+  // Simulation engine uses this step size to synchronize all the co-simulation
+  // clients. At discrete epochs (0, 1*step_size, 2*step_size, ...), all clients
+  // update the simulation engine with runtime attributes of actors (and other
+  // dynamic objects). 
+  double step_size = 1;
+
+  // Maximal duration of the simulation
+  double max_simulation_time = 2;
+
+  // A configuration to turn on/off the simulation pacing.
+  // - When is_pacer_on = true: simulation pace value is honored by the simulation
+  //   engine
+  // - When is_pacer_on = false: simulation runs as fast as possible. The simulation
+  //   pace value is ignored
+  bool is_pacer_on = 3;
+
+  // The Simulation pace is the rate at which the simulation runs w.r.t. the wall
+  // clock time. It is given by:
+  //
+  //    simulation_pace = (elapsed simulation time) / (elapsed wall clock time)
+  //
+  // Example: 
+  // - A pace of 1.0 would mean that for every second on the wall clock, the
+  //   simulation would also complete running 1 second.
+  // - A pace of 0.5 would mean that for every second on the wall clock, the
+  //   simulation would have simulated 0.5 second (i.e., slower).
+  // - A pace of 2.0 would mean that for every 1 second on the wall clock, the
+  //   simulation would have simulated 2 seconds (i.e., faster).
+  // Simulation engine applies a lower limit of 0.001 on this pace value.
+  double simulation_pace = 4;
+}

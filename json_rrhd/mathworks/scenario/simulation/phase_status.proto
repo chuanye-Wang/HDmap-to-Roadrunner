@@ -1,0 +1,46 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/action_status.proto";
+import "mathworks/scenario/simulation/condition_status.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+//  Phase Status
+////////////////////////////////////////////////////////////////////////////////
+
+// Runtime attributes of a phase
+message PhaseStatus
+{
+  // Identifier of the phase
+  string id = 1;
+  
+  // Current state of this phase
+  PhaseState phase_state = 2;
+
+  // Current status of the start Condition
+  ConditionStatus start_condition_status = 3;
+
+  // Current status of the end condition
+  ConditionStatus end_condition_status = 4;
+
+  // Current status of objectives and constraints
+  repeated ActionStatus action_status = 5;
+}
+
+// Runtime state of a phase
+enum PhaseState
+{
+  // The phase has not yet been initialized
+  PHASE_STATE_UNSPECIFIED = 0;
+  // The phase is not yet running, and its start conditions are not yet being evaluated
+  PHASE_STATE_IDLE = 1;
+  // The phase's start conditions are being evaluated, but are not yet satisfied
+  PHASE_STATE_START = 2;
+  // The start conditions were satisfied. The phase is running.
+  PHASE_STATE_RUN = 3;
+  // Phase execution has ended, or was skipped.
+  PHASE_STATE_END = 4;
+}

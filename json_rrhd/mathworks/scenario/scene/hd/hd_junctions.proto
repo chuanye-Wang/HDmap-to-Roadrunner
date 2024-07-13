@@ -1,0 +1,32 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+import "mathworks/scenario/common/geometry.proto";
+import "mathworks/scenario/scene/hd/common_attributes.proto";
+
+//
+// Junctions represent a logical grouping of a set of lanes, 
+// typically involving a crossing (or convergence/divergence) between 
+// multiple roadways
+//
+message Junction 
+{
+  // Id of the junction entity
+  //
+  string id = 1;
+  
+  // Geometry of the object
+  //
+  scenario.common.MultiPolygon geometry = 2;
+  
+  // These lanes may connect topologically to other lanes enclosed in the junction. 
+  // For example, a small roundabout (mini-circle) could be comprised of a single 
+  // junction whose enclosed lanes include a ring formation.
+  // It is valid for multiple junctions to include the same lane 
+  // (e.g. in cases where complex junctions are formed from multiple overlapping junctions)
+  //
+  repeated Reference lanes = 3;
+}

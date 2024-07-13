@@ -1,0 +1,389 @@
+// Copyright (c) 2023, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.roadrunner;
+
+import "mathworks/roadrunner/import_settings.proto";
+import "mathworks/roadrunner/export_settings.proto";
+import "mathworks/scenario/common/geometry.proto";
+import "mathworks/scenario/common/array.proto";
+
+import "google/protobuf/wrappers.proto";
+
+message NewProjectRequest
+{
+  // Path to new project (required)
+  // - Directory structure is created recursively.
+  // - Error if folder already exists.
+  string folder_path = 1;
+
+  // Asset libraries to include in new project (optional)
+  // - Valid entries: "RoadRunner_Asset_Library"
+  repeated string asset_libraries = 2;
+}
+
+message NewProjectResponse
+{
+}
+
+message LoadProjectRequest
+{
+  // Path to existing project (required)
+  string folder_path = 1;
+}
+
+message LoadProjectResponse
+{
+}
+
+message SaveProjectRequest
+{
+}
+
+message SaveProjectResponse
+{
+}
+
+message NewSceneRequest
+{
+}
+
+message NewSceneResponse
+{
+}
+
+message LoadSceneRequest
+{
+  // Scene file to load (required)
+  // - If a relative path is specified, the path is relative to the "Scenes" directory of the current project.
+  // - If the correct file extension is not present, it is appended.
+  string file_path = 1;
+}
+
+message LoadSceneResponse
+{
+}
+
+message SaveSceneRequest
+{
+  // Target file path (optional)
+  // - If unspecified, RoadRunner uses the current file path of the scene (error if scene has no current file path).
+  // - If a relative path is specified, the scene is saved relative to the "Scenes" directory of the current project.
+  // - Directory structure is created recursively.
+  // - Any existing file is overwritten.
+  // - If the correct file extension is not present, it is appended.
+  string file_path = 1;
+}
+
+message SaveSceneResponse
+{
+}
+
+message ChangeWorldSettingsRequest
+{
+  // If true, clear the current world projection
+  // - Default: false
+  // - Error if no world origin is set.
+  bool clear_world_projection = 1;
+
+  // The world origin of the scene
+  Coordinates world_origin = 2;
+
+  // If true, transform the scene after changing the world origin
+  // - Default: false
+  // - Transforming the scene can be a costly operation, but will attempt to maintain the correct world
+  //   location.
+  bool transform_scene = 3;
+
+  scenario.common.Vector2 scene_center = 4;
+
+  scenario.common.Vector2 scene_extents = 5;
+}
+
+message ChangeWorldSettingsResponse
+{
+  // The projection of the scene as a WKT string
+  // - If empty, the scene doesn't have a projection
+  scenario.common.Projection projection = 1;
+
+  // If empty, the scene doesn't have a world origin
+  Coordinates world_origin = 2;
+
+  scenario.common.Vector2 scene_center = 3;
+
+  scenario.common.Vector2 scene_extents = 4;
+}
+
+message Coordinates
+{
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message SetVariableRequest
+{
+  // Name of the variable to set (required)
+  string name = 1;
+  // New value to assign to the variable (required)
+  oneof value_type
+  {
+    string value = 2;
+    mathworks.scenario.common.Value typed_value = 3;
+  }
+}
+
+message SetVariableResponse
+{
+}
+
+message GetVariableRequest
+{
+  // Name of the variable to retrieve (required)
+  string name = 1;
+}
+
+message GetVariableResponse
+{
+  // Value of the retrieved variable as a string
+  string value = 1 [deprecated=true];
+  // Name, string value, and typed value of the retrieved variable
+  Variable variable = 2;
+}
+
+message GetAllVariablesRequest
+{
+}
+
+message GetAllVariablesResponse
+{
+  repeated Variable variables = 1;
+}
+
+message Variable
+{
+  string name = 1;
+  string value = 2;
+  mathworks.scenario.common.Value typed_value = 3;
+}
+
+message NewScenarioRequest
+{ 
+}
+
+message NewScenarioResponse
+{
+}
+
+message LoadScenarioRequest
+{
+  // Scenario file to load (required)
+  // - If a relative path is specified, the path is relative to the "Scenarios" directory of the current project.
+  // - If the correct file extension is not present, it is appended.
+  string file_path = 1;
+  
+  // Load scenario into current scene (optional)
+  // - If true and there is no current scene, the command fails
+  // - Default: false
+  bool keep_current_scene = 2;
+}
+
+message LoadScenarioResponse
+{
+}
+
+message SaveScenarioRequest
+{
+  // Target file path (optional)
+  // - If unspecified, RoadRunner uses the current file path of the scenario (error if scenario has no current file path).
+  // - If a relative path is specified, the scenario is saved relative to the "Scenarios" directory of the current project.
+  // - Directory structure is created recursively.
+  // - Any existing file is overwritten.
+  // - If the correct file extension is not present, it is appended.
+  string file_path = 1;
+}
+
+message SaveScenarioResponse
+{
+}
+
+message PrepareSimulationRequest
+{
+
+}
+
+message PrepareSimulationResponse
+{
+
+}
+
+message SimulateScenarioRequest
+{
+  // Control how fast the simulation runs (optional)
+  // - Value between 0 and 1: Simulation runs slower than real time 
+  // - Value of 1: Simulation runs in real time
+  // - Value greater than 1: Simulation runs faster than real time
+  // - Omit this value to run simulation as fast as possible
+  google.protobuf.DoubleValue pacing = 1;
+  
+  // Block calls during simulation (optional)
+  // - If true, this call does not return until the simulation ends.
+  // - If false, this call returns immediately after starting the simulation.
+  // - Default: true
+  google.protobuf.BoolValue blocking = 2;
+
+  // Single step start
+  // - If true, this call steps the simulation forward by one step if simulation has not started yet
+  // - If false, this call starts the simulation
+  google.protobuf.BoolValue stepping_start = 3;
+}
+
+message SimulateScenarioResponse
+{
+
+}
+
+message ExportRequest
+{
+  // File path of exported scene or scenario (required)
+  // - Path can be absolute or relative
+  // - If relative, the exported file is saved relative to "Exports" directory of current project.
+  // - If any folders in the path are missing, RoadRunner tries to create them.
+  // - File extension must be included in the path.
+  string file_path = 1;
+
+  // Export format name (required)
+  // - Use name of exporter (e.g., OpenDRIVE), not file extension (e.g., xodr). Case insensitive.
+  string format_name = 2;
+
+  // Export settings (optional)
+  // - If set, the export settings type must be compatible with the format_name field.
+  oneof export_settings
+  {
+	// Scene export formats:
+	AutoCadExportSettings auto_cad_settings = 3;
+	FilmboxExportSettings filmbox_settings = 4;
+	GltfExportSettings gltf_settings = 5;
+	OpenFlightExportSettings open_flight_settings = 6;
+	OpenSceneGraphExportSettings open_scene_graph_settings = 7;
+	UnrealDatasmithExportSettings unreal_datasmith_settings = 17;
+	UsdExportSettings usd_settings = 8;
+	ApolloExportSettings apollo_settings = 9;
+	GeoJsonExportSettings geo_json_settings = 10;
+	OpenDriveExportSettings open_drive_settings = 11;
+	CarlaExportSettings carla_settings = 12;
+	CarlaFilmboxExportSettings carla_filmbox_settings = 19;
+	MetamotoExportSettings metamoto_settings = 13;
+	RFProExportSettings rfpro_settings = 20;
+	UnityExportSettings unity_settings = 14;
+	UnrealExportSettings unreal_settings = 15;
+	DatasmithRoadExportSettings datasmith_road_settings = 18;
+	VtdExportSettings vtd_settings = 16;
+	
+	// Scenario export formats:
+	OpenScenarioExportSettings open_scenario_settings = 1000;
+	OpenScenario2ExportSettings open_scenario_2_settings = 1001;
+  }
+}
+
+message ExportResponse
+{
+}
+
+message ImportRequest
+{
+  reserved 1000;
+
+  // Path of file to import
+  // - Path can be absolute or relative.
+  // - If relative, file must be in "Assets" directory of current project.
+  string file_path = 1;
+
+  // Import format name (required)
+  // - Use name of importer (e.g., OpenDRIVE), not file extension (e.g., xodr). Case insensitive.
+  string format_name = 3;
+
+  // Import settings (optional)
+  // - If set, the import settings type must be compatible with the format_name field.
+  oneof import_settings
+  {
+    OpenDriveImportSettings open_drive_settings = 2;
+    RoadRunnerHdMapImportSettings roadrunner_hd_map_settings = 4;
+    CsvTrajectoryImportSettings csv_trajectory_settings = 5;
+    SdMapImportSettings sd_map_settings = 6;
+  }
+}
+
+message ImportResponse
+{
+}
+
+message ExitRequest
+{
+}
+
+message ExitResponse
+{
+}
+
+message RoadRunnerStatusRequest
+{
+}
+
+message RoadRunnerStatusResponse
+{
+  // If any of these fields are not present, the given dataset is not open in RoadRunner
+  DatasetInfo project_info = 1;
+  DatasetInfo scene_info = 2;
+  DatasetInfo scenario_info = 3;
+
+  string version = 4;
+}
+
+// Information about a RoadRunner dataset (project, scene, or scenario)
+message DatasetInfo
+{
+  // If true, the dataset contains unsaved changes
+  bool unsaved_changes = 1;
+
+  // The absolute file path of the dataset
+  // - If empty, the dataset has no file path (i.e. it hasn't been saved yet)
+  string file_path = 2;
+}
+
+message RemapAnchorRequest
+{
+  // Name of the source anchor from the scenario (required)
+  // - If empty or not found in the scenario, the operation will fail.
+  string source_anchor = 1;
+  
+  // Type of anchor remap to execute: by anchor name or by 3d position (required)
+  // - If empty, the operation will fail
+  oneof remap_type
+  {
+	AnchorRemapToName name_remap = 2;
+	AnchorRemapToPosition position_remap = 3;
+  }
+}
+
+message RemapAnchorResponse
+{
+}
+
+message AnchorRemapToName
+{
+  // Name of target anchor to remap to (required)
+  // - If not found in the scenario, the operation will fail
+  string target_anchor = 1;
+}
+
+message AnchorRemapToPosition
+{
+  // Position relative to the center of the RoadRunner scene to create a new anchor to remap to (required)
+  // - If the distance between this position and the closest road in the scene is greater than 25 meters, the operation will fail
+  scenario.common.Vector3 position = 1;
+  
+  // Name of the newly created anchor (optional)
+  // - If left empty, default name will be used
+  string new_anchor_name = 2;
+}

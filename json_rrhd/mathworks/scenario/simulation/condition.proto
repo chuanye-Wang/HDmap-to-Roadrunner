@@ -1,0 +1,230 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/comparison.proto";
+import "mathworks/scenario/simulation/phase_status.proto";
+import "mathworks/scenario/simulation/targets.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+// Data model for conditions in a scenario logic model
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// A Condition represents one or a combination of Boolean predicates, each operating
+// on some runtime values of a scenario. It can be used in multiple places of a 
+// scenario model, such as to specify when a phase shall end.
+//
+message Condition
+{
+  // A string that uniquely identifies a condition
+  string id = 1; 
+
+  // Categorize a condition based on whether it results from combining multiple
+  // other conditions
+  oneof type {
+    // A type of condition that combines multiple other conditions
+    CompositeCondition composite_condition = 2;
+    // A type of condition that checks a single predicate
+    SingularCondition singular_condition = 3;
+  }
+}
+
+//
+// A CompositeCondition combines multiple other conditions using Boolean operators
+// such as AND and OR.
+//
+message CompositeCondition
+{
+  // Type of Boolean operator
+  oneof type {
+    // Combine conditions with OR operators
+    OrCondition or_condition = 1;
+    // Combine conditions with AND operators
+    AndCondition and_condition = 3;
+  }
+
+  // Operands of the Boolean operation
+  repeated Condition operands = 2;
+}
+
+//
+// Combine conditions with OR operators
+//
+message OrCondition
+{
+}
+
+//
+// Combine conditions with AND operators
+//
+message AndCondition
+{
+}
+
+//
+// A SingularCondition represents a Boolean expression that operates on some runtime
+// values of a scenario.
+//
+message SingularCondition
+{
+  // Type of a condition
+  oneof type {
+    // Pre-defined condition on speed of an actor
+    ActorSpeedCondition actor_speed_condition = 101;
+    // Pre-defined condition on the distance between specified objects
+    DistanceCondition distance_condition = 102;
+    // Pre-defined condition on collision status of specified objects
+    CollisionCondition collision_condition = 103;
+    // Pre-defined condition on duration of a specified phase
+    DurationCondition duration_condition = 104;
+    // Pre-defined condition on completion of phase actions
+    PhaseStateCondition phase_state_condition = 105;
+    // Pre-defined condition on the current simulation time
+    SimulationTimeCondition simulation_time_condition = 106;
+    // Pre-defined condition on wether an event has occurred
+    EventCondition event_condition = 107;
+    // Pre-defined condition on parameter value
+    ParameterCondition parameter_condition = 108;
+    // Pre-defined condition on actions complete
+    ActionsCompleteCondition actions_complete_condition = 109;
+    // Pre-defined condition on time distance between two actors
+    TimeToActorCondition time_to_actor_condition = 110;
+  }
+}
+
+//
+// ActorSpeedCondition checks if the current speed of an actor reaches a target value
+//
+message ActorSpeedCondition
+{
+  // Identifier of the actor
+  string actor_id = 1;
+  // Target speed
+  SpeedTarget speed_target = 2;
+}
+
+//
+// DistanceCondition checks if the distance between two specified
+// objects satisfies a given rule
+//
+message DistanceCondition
+{
+  // Identifier of an actor for distance computation
+  string actor_id = 1;
+
+  // Distance target
+  // NOTE: The following configurations are supported
+  // - Distance dimension type: Longitudinal, Euclidean
+  // - Distance type: space distance (out of 2 types: space and time distance)
+  // - Relative position: ahead of, behind, either
+  // - Coordinate system: actor lane and actor pose
+  // - Measure from: bounding boxes and origins
+  DistanceTarget distance_target = 2;
+}
+
+//
+// CollisionCondition checks if specified actors have collided with each other. The
+// check is between an actor from a first group, and an actor from a second group.
+// 
+message CollisionCondition
+{
+  // Identifiers of the actors in the first group. If not specified, all actors are
+  // included in the first group.
+  repeated string actor_ids = 1;
+
+  // Identifiers of the actors in the second group. If not specified, all actors are
+  // included in the second group.
+  repeated string reference_actor_ids = 2;
+}
+
+//
+// DurationCondition checks if simulation time duration exceeds a specified value
+// since this condition is applied. This condition is commonly used as an end
+// condition of a phase to limit its duration.
+//
+message DurationCondition
+{
+  // Time duration in seconds
+  double duration_time = 1;
+}
+
+// PhaseStateCondition checks for a phase's state and triggers when that phase
+// reaches the specified state
+//
+message PhaseStateCondition
+{
+  string phase_id = 1;
+  // Triggering phase state
+  PhaseState phase_state = 2;
+}
+
+//
+// SimulationTimeCondition checks if current simulation time is greater than or equal
+// to a specified value
+//
+message SimulationTimeCondition
+{
+  // Value for time comparison
+  double time = 1; 
+}
+
+//
+// CustomCommandCondition checks if a custom command with the specified name has
+// received since last time the scenario is updated
+//
+message EventCondition
+{
+  // Name of the custom command
+  string event_name = 1;
+  
+  //
+  repeated ParameterCondition parameter_conditions = 2;
+}
+
+//
+// ParameterCondition compares value of a parameter against a specified value
+//
+message ParameterCondition
+{
+  // Reference of a parameter
+  ParameterReference parameter_reference = 1;
+  
+  // Comparison rule
+  ComparisonRule rule = 2;
+  
+  // Value to which the value of parameter shall be compared to
+  string compared_parameter_value = 3;
+}
+
+//
+// ActionsCompleteCondition checks if all actions of a phase have completed. 
+// - For an action phase, these include the set of actions that are directly
+//   contained in the phase
+// - For a composite phase (such as a parallel phase), the set of actions include
+//   all the child actions in the nested phase hierarchy
+//
+message ActionsCompleteCondition
+{
+  // Identifier of the specified phase
+  string phase_id = 1;
+}
+
+//
+// TimeToActorCondition compares the time distance between two actors
+//
+message TimeToActorCondition
+{
+    // Identifier of an actor for distance computation
+  string actor_id = 1;
+
+  // Distance target
+  // NOTE: The following configurations are supported
+  // - Distance dimension type: Longitudinal, Euclidean
+  // - Distance type: time distance (out of 2 types: space and time distance)
+  // - Coordinate system: actor lane and actor pose
+  // - Measure from: bounding boxes and origins
+  DistanceTarget distance_target = 2;
+}

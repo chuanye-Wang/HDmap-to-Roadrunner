@@ -1,0 +1,45 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+import "mathworks/scenario/scene/hd/common_attributes.proto";
+import "mathworks/scenario/common/geometry.proto";
+
+//
+// Message for static object information
+//  - Used to describe attributes of physical objects (road furniture, props, etc.)
+//
+message StaticObjectTypeDefinition
+{
+
+  // Id of the object type definition.
+  // This can be referenced by StaticObjects to describe the type information.
+  //
+  string id = 1;
+
+  // Asset path pointing to information about this object type.
+  // This is usually a 3D mesh or prop asset file.
+  //
+  RelativeAssetPath asset_path = 2;
+}
+
+//
+// Message for static object instances
+//  - Used for props and road furniture that do not move
+//
+message StaticObject
+{
+  string id = 1;
+
+  // Static objects are fit within an oriented bounding box.
+  //  - Objects should be scaled to fit the bounds, then rotated
+  // See GeoOrientation3 definition for how to handle rotations.
+  //
+  scenario.common.GeoOrientedBoundingBox geometry = 2;
+
+  // Reference to a object type definition.
+  //
+  Reference object_type_ref = 3;
+}

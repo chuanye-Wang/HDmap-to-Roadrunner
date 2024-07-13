@@ -1,0 +1,24 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/attributes.proto";
+
+//
+// A CustomCommand defines a user-defined command of a scenario. It can be used by an
+// actor or the simulation engine to notify other actors and the simulation engine
+// to perform certain operations
+// - Consider rename this message for reusability post R2022b. Currently this is used
+//   for User-defined action in R2022b GR
+//
+message CustomCommand
+{
+  // Command name
+  string name = 1;
+
+  // Attributes of the custom command, including their names and values
+  repeated Attribute attributes = 2;  
+}
+

@@ -1,0 +1,25 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/action.proto";
+import "mathworks/scenario/simulation/condition_status.proto";
+
+// -----------------------------------------------------------------------------
+//    Action Status
+// -----------------------------------------------------------------------------
+
+// Runtime status of an action
+message ActionStatus
+{
+  // Identifier of the action
+  string id = 1;
+
+  // Action event dispatch status
+  ActionEventStatus action_event_status = 2;
+  
+  // Runtime condition of this action
+  ConditionStatus condition_status = 3;
+}

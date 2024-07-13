@@ -1,0 +1,86 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+// Indicates how a referenced object is aligned with 
+// respect to another. For example, if a lane and lane 
+// boundary are both digitized in the same direction, 
+// they would refer to one another with ALIGNMENT_FORWARD.
+//
+enum Alignment 
+{
+  ALIGNMENT_UNSPECIFIED = 0;
+  ALIGNMENT_FORWARD = 1;
+  ALIGNMENT_BACKWARD = 2;
+}
+
+// Defines the range of the span over which the
+// particular parametric attribute is valid.
+// The region between the start and end 
+// is considered valid for the span.
+//
+message ParametricRange
+{
+  // Span Start is expressed in [0, 1]
+  // proportional to the distance along the object
+  // measured from the start of the object geometry.
+  // Typically, the object is a lane or lane boundary
+  //
+  double span_start = 1;
+	
+  // Span End is expressed in [0, 1]
+  // proportional to the distance along the object
+  // measured from the start of the object geometry.
+  // Typically, the object is a lane or lane boundary
+  //
+  double span_end = 2;
+}
+
+//
+// Aligned Reference message holds the id to the object 
+// being referred to with alignment.
+//
+message AlignedReference 
+{
+  Reference reference = 1;
+  Alignment alignment = 2;
+}
+
+//
+// Reference message holds the id to the object being
+// referred to. For example a Junction 'A' can refer to 
+// a Lane 'B' by holding B's id in its reference message.
+//
+message Reference 
+{
+  string id = 1;
+}
+
+//
+// An object can refer to its asset by using its
+// directory path relative to the project directory.
+// For example, to create a White Dashed lane marking
+// in HD Map, asset_path in Lane Marking message can be set as
+// "Assets/Markings/DashedSingleWhite.rrlms"
+//
+message RelativeAssetPath
+{
+  // Relative path to marking asset
+  //
+  string asset_path = 1;
+} 
+
+//
+// Message for metadata information
+// Used to provide information about other additional/user data
+//
+message Metadata
+{	
+	// Name of the Metadata object
+	string name = 1;
+	
+	// Value of the Metadata object
+	string value = 2;
+}

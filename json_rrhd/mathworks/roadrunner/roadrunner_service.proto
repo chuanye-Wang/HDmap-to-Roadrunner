@@ -1,0 +1,104 @@
+// Copyright (c) 2023, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.roadrunner;
+
+import "mathworks/roadrunner/roadrunner_service_messages.proto";
+
+// Service for the RoadRunner methods (type definitions are in roadrunner_service_messages.proto)
+service RoadRunnerService
+{	
+  //////////////////////////////////////
+  // Project Methods
+  //////////////////////////////////////
+  
+  // Create and activate new project
+  rpc NewProject (NewProjectRequest) returns (NewProjectResponse) {}
+  
+  // Load specified project if not already loaded
+  // - A new scene is always created, even if the specified project is already loaded
+  rpc LoadProject (LoadProjectRequest) returns (LoadProjectResponse) {}
+  
+  // Save any modified assets in the current project
+  rpc SaveProject (SaveProjectRequest) returns (SaveProjectResponse) {}
+  
+  //////////////////////////////////////
+  // Scene Methods
+  //////////////////////////////////////
+
+  // Create new scene in the current project
+  rpc NewScene (NewSceneRequest) returns (NewSceneResponse) {}
+  
+  // Load scene 
+  // - If the specified scene does not belong to the existing project, the appropriate project
+  //   is determined from the scene and loaded
+  rpc LoadScene (LoadSceneRequest) returns (LoadSceneResponse) {}
+  
+  // Save current scene to specified path or to path of current scene
+  // If the scene contains modified assets, the current project is also saved
+  rpc SaveScene (SaveSceneRequest) returns (SaveSceneResponse) {}	
+
+  // Query or modify the world settings of the active scene, including the world origin and scene
+  // extents
+  rpc ChangeWorldSettings(ChangeWorldSettingsRequest) returns (ChangeWorldSettingsResponse) {}
+
+  //////////////////////////////////////
+  // Scenario Methods
+  //////////////////////////////////////
+
+  // Set variable in the current scenario
+  rpc SetScenarioVariable (SetVariableRequest) returns (SetVariableResponse) {}
+  
+  // Retrieves variable value in the current scenario
+  rpc GetScenarioVariable (GetVariableRequest) returns (GetVariableResponse) {}
+  
+  // Retrieves all variable names and values in the current scenario
+  rpc GetAllScenarioVariables (GetAllVariablesRequest) returns (GetAllVariablesResponse) {}
+  
+  // Create new scenario in the current project
+  // - Requires an open scene
+  rpc NewScenario (NewScenarioRequest) returns (NewScenarioResponse) {}
+
+  // Load scenario
+  // - The specified scenario is loaded into the existing scene if it was previously saved with
+  //   the current scene (or if keep_current_scene is set to true).
+  // - Otherwise, the scene is determined from the scenario and loaded.
+  rpc LoadScenario (LoadScenarioRequest) returns (LoadScenarioResponse) {}
+
+  // Save current scenario to specified path or to path of current scenario
+  // - The scene and project are also saved.
+  rpc SaveScenario (SaveScenarioRequest) returns (SaveScenarioResponse) {}	
+
+  // Submits simulation data (scenario definition, map definition) to the SSE making them
+  // available to be queried without starting the simulation.
+  rpc PrepareSimulation (PrepareSimulationRequest) returns (PrepareSimulationResponse) {}
+
+  // Simulate current scenario
+  // - Set blocking to true to optionally block additional calls until simulation is over.
+  rpc SimulateScenario (SimulateScenarioRequest) returns (SimulateScenarioResponse) {}	
+  
+  // Remap Anchor
+  // - Remaps dependencies from a source anchor in the scenario to a different target road anchor. 
+  // - Target road anchor can be specified either by name or position.
+  //   - A name remap will search for a road anchor with matching name in the scenario and scene.
+  //   - A position remap will create a new road anchor on the road closest to the provided position.
+  rpc RemapAnchor (RemapAnchorRequest) returns (RemapAnchorResponse) {}
+
+  //////////////////////////////////////
+  // Other methods
+  //////////////////////////////////////
+
+  // Export RoadRunner scene or scenario to supported file format
+  rpc Export(ExportRequest) returns (ExportResponse) {}
+
+  // Import supported file format into scene or scenario
+  rpc Import(ImportRequest) returns (ImportResponse) {}
+  
+  // Exit RoadRunner
+  // The RoadRunner application exits and the gRPC server is shut down
+  rpc Exit (ExitRequest) returns (ExitResponse) {}
+
+  // Get the current state of RoadRunner (Which scenes/scenarios are loaded, unsaved changes, etc.)
+  rpc RoadRunnerStatus(RoadRunnerStatusRequest) returns (RoadRunnerStatusResponse) {}
+}

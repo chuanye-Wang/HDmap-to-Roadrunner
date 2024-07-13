@@ -1,0 +1,221 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.common;
+
+message Vector2
+{
+  double x = 1;
+  double y = 2;
+}
+
+message Vector2Array
+{
+  repeated Vector2 values = 1;
+}
+
+// 3D vector with double precision
+message Vector3
+{
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Vector3Array
+{
+  repeated Vector3 values = 1;
+}
+
+message Matrix3x3
+{
+  Vector3 col0 = 1;
+  Vector3 col1 = 2;
+  Vector3 col2 = 3;
+}
+
+message Matrix3x3Array
+{
+  repeated Matrix3x3 values = 1;
+}
+
+message Vector4
+{
+  double x = 1;
+  double y = 2;
+  double z = 3;
+  double w = 4;
+}
+
+message Vector4Array
+{
+  repeated Vector4 values = 1;
+}
+
+message Matrix4x4
+{
+  Vector4 col0 = 1;
+  Vector4 col1 = 2;
+  Vector4 col2 = 3;
+  Vector4 col3 = 4;
+}
+
+message Matrix4x4Array
+{
+  repeated Matrix4x4 values = 1;
+}
+
+// 3D axis-aligned box
+message Box3
+{
+  Vector3 min = 1;
+  Vector3 max = 2;
+}
+
+// A 3D polyline that describes a path
+message Path
+{
+  repeated common.Vector3 points = 1;
+}
+
+//
+// List of 3D vectors
+//
+message Vector3List
+{
+  repeated Vector3 values = 1;
+}
+
+//
+// Geometry Definition of Polygon Objects
+// Each polygon constitutes of an exterior ring
+// marking its outer boundary and a repeated set of
+// interior rings that represents the holes within
+// the polygon bounds.
+//
+message Polygon
+{
+  // Exterior ring defines the bounds of the polygon.
+  //
+  Vector3List exterior_ring = 1;
+
+  // Each interior ring corresponds to the area of
+  // a hole within the bounds of the polygon.
+  //
+  repeated Vector3List interior_rings = 2;
+}
+
+//
+// A collection of non-overlapping polygons.
+// Non-overlapping polygon set may include polygons
+// with bounds inside the hole of another polygon.
+//
+message MultiPolygon
+{
+  repeated Polygon polygons = 1;
+}
+
+//
+// This message defines the geospatial projection and datum used to represent
+// spatial coordinates in the map.
+// - Valid WKT (including ESRI WKT) or PROJ.4 projection strings are supported.
+//
+message Projection
+{
+  string projection = 1;
+}
+
+//
+// Dimensions along the X (length), Y (width), and Z (height) axes.
+// Values must be non-negative for each dimension.
+// Units are defined in each message where Dimension3 is used.
+//
+message Dimension3
+{
+  double length = 1;
+
+  double width = 2;
+
+  double height = 3;
+}
+
+//
+// A 3d orientation represented by 3 angles that works in different projection spaces.
+// Units are radians and rotation is in the clockwise direction about each axis.
+//
+// A GeoAngle3 (roll, pitch, heading) of (0,0,0) faces forward in the
+// positive X direction in the file's projection spaces, with left in
+// the positive Y direction, and up in the positive Z direction.
+//
+// While similar to Euler Angles there are additional steps required to convert
+// these values into a transformation matrix. Heading must first be converted
+// into the target projection from the file's projection. Once the heading is in
+// the target projection, a transformation matrix can be created by applying
+// the rotations in the order heading (about the Z axis),
+// pitch (about the new Y axis), and roll (about the new X axis).
+//
+message GeoAngle3
+{
+  // Clockwise rotation in the local cartesian space about the X'' axis.
+  // Does not need to be reprojected.
+  //
+  double roll = 1;
+
+  // Clockwise rotation in the local cartesian space about the Y' axis.
+  // Does not need to be reprojected.
+  //
+  double pitch = 2;
+
+  // Clockwise rotation in the file's projection space about the Z axis.
+  // A value of 0 will point in the positive X direction
+  // in the file's projection space.
+  //
+  double heading = 3;
+}
+
+//
+// A 3d orientation that works in different projections spaces.
+//
+message GeoOrientation3
+{
+  // Rotation represented by 3 angles in radians.
+  // See GeoAngle3 for usage details.
+  //
+  GeoAngle3 geo_angle = 1;
+}
+
+//
+// GeoOrientedBoundingBox represents geometry for a stationary object. (Ex: Sign)
+// It includes the dimensions in meters, center position(x,y,z) and orientation
+// of the bounding box.
+//
+message GeoOrientedBoundingBox
+{
+  // The center position (x,y,z) of the bounding box.
+  //
+  scenario.common.Vector3 center = 1;
+
+  // Dimensions in meters for each local oriented axis of the box in cartesian space.
+  // These represent the distance between the center and the box face in that local axis.
+  // These values are half of the total length of the box in that local axis.
+  //  - Eg. Box is 5 meters wide, the dimension for that axis is 2.5m.
+  //
+  Dimension3 dimension = 2;
+
+  // Orientation of the box.
+  // See GeoOrientation3 definition for more information on how to handle rotations.
+  //
+  GeoOrientation3 geo_orientation = 3;
+}
+
+//
+// Orientation represents an orientation through either euler angles or a rotation matrix.
+//
+message Orientation
+{
+  oneof representation {
+    GeoAngle3 euler_angles = 1;
+    Matrix3x3 rotation_matrix = 2;
+  }
+}

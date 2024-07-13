@@ -1,0 +1,187 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+//
+// \mainpage Overview
+// \brief Scenario Simultion Descriptor provides a data model for scenario
+// simulation related objects and services.
+//
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/cosim.proto";
+import "mathworks/scenario/simulation/event.proto";
+
+// Service for the RoadRunner CoSimulation API
+// - Type definitions in cosim.proto
+service CoSimulationApi
+{	
+  //////////////////////////////////////
+  // Client connection and subscriptions
+  //////////////////////////////////////
+  
+  // Initialization function where calling clients are assigned an id.
+  rpc RegisterClient (RegisterClientRequest) returns (RegisterClientResponse) {}
+  
+  // Registers the calling client as ready to proceed with the next update.
+  rpc SetReady (SetReadyRequest) returns (SetReadyResponse) {}
+
+  // Notify that the client is alive and busy
+  rpc SetBusy (SetBusyRequest) returns (SetBusyResponse) {}
+  
+  // Registers the calling client to receive events.
+  // Note that this is a long-lived stream, and persists until the client or the server shuts down.
+  rpc SubscribeEvents (SubscribeEventsRequest) returns (stream Event) {}
+
+  //////////////////////////////////////
+  // Scene and map access interface
+  //////////////////////////////////////  
+  
+  // Upload the HD map
+  rpc UploadMap (UploadMapRequest) returns (UploadMapResponse) {}
+  
+  // Download the HD map
+  rpc DownloadMap (DownloadMapRequest) returns (DownloadMapResponse) {}
+  
+  //////////////////////////////////////
+  // Scenario access interface
+  //////////////////////////////////////
+  
+  // Uploads the provided scenario making it available for simulation.
+  // - Overwrites any previously uploaded scenario
+  rpc UploadScenario (UploadScenarioRequest) returns (UploadScenarioResponse) {}
+  
+  // Download the most recently uploaded scenario
+  rpc DownloadScenario (DownloadScenarioRequest) returns (DownloadScenarioResponse) {}
+
+  //////////////////////////////////////
+  // Simulation settings access interface
+  //////////////////////////////////////
+
+  // Set simulation settings
+  rpc SetSimulationSettings (SetSimulationSettingsRequest) returns (SetSimulationSettingsResponse) {}
+
+  // Request the server the change the pace of simulation
+  rpc SetSimulationPace (SetSimulationPaceRequest) returns (SetSimulationPaceResponse) {}
+
+  // Get simulation settings
+  rpc GetSimulationSettings (GetSimulationSettingsRequest) returns (GetSimulationSettingsResponse) {}
+
+  //////////////////////////////////////
+  // Simulation control interface
+  //////////////////////////////////////
+  
+  // Requests that the simulation start.
+  // - Does nothing if the simulation is already running.
+  rpc StartSimulation (StartSimulationRequest) returns (StartSimulationResponse) {}
+
+  // Request to immediately stop current run and start off a new run.
+  rpc RestartSimulation (RestartSimulationRequest) returns (RestartSimulationResponse) {}
+  
+  // A blocking call that requests for the simulation to stop. The RPC call returns with
+  // a response after simulation has stopped.
+  // - Does nothing if the simulation is not already running.
+  rpc StopSimulation (StopSimulationRequest) returns (StopSimulationResponse) {}
+  
+  // A non-blocking call to request for the simulation to stop. The RPC call returns
+  // immediately with a response and does not wait until simulation has actually stopped.
+  // - Does nothing if the simulation is not already running.
+  rpc StopSimulationRequested (StopSimulationRequest) returns (StopSimulationResponse) {}
+  
+  // If the simulation is paused, requests to advance the simulation by a single
+  // time step and remain paused. 
+  // - This service record the single stepping request and return without waiting
+  //   for simulation to complete.
+  rpc StepSimulation (StepSimulationRequest) returns (StepSimulationResponse) {}
+
+  // Request that the simulation be paused or unpaused.
+  // 
+  // Upon pause requested, simulation engine will:
+  // - Complete operations of the current time step, including the simulation step
+  //   event and the simulation post-step event
+  // - Advance time
+  // - Notify clients that simulation is paused (via a SimulationStatusChangedEvent)
+  // - Pause without proceeding
+  //
+  // Upon unpause requested, simulation engine will:
+  // - Notify clients that simulation is running (via a SimulationStatusChangedEvent)
+  // - Resume simulation
+  rpc ToggleSimulationPaused (ToggleSimulationPausedRequest) returns (ToggleSimulationPausedResponse) {}
+
+  // Get current simulation status
+  rpc GetSimulationStatus (GetSimulationStatusRequest) returns (GetSimulationStatusResponse) {}
+
+  // Get current simulation time
+  rpc GetSimulationTime (GetSimulationTimeRequest) returns (GetSimulationTimeResponse) {}
+  
+  //////////////////////////////////////
+  // World states access interface
+  //////////////////////////////////////  
+
+  // Submits actor runtime states to the server.
+  // Note that:
+  // - This call shall be placed as a part of event listener callback of
+  //   a simulation step event.
+  // - The set values will not be committed by the server until all the clients
+  //   has acknowledged the step event.
+  rpc SetRuntimeActors (SetRuntimeActorsRequest) returns (SetRuntimeActorsResponse) {}
+  
+  // Set runtime pose related attributes on one or multiple actors
+  // - This service is applicable to all types of actors
+  // - Pose related attributes include e.g., location, heading, velocity etc.
+  rpc SetActorPoses (SetActorPosesRequest) returns (SetActorPosesResponse) {}
+
+  // Set runtime pose related attributes on vehicle actors
+  // - This service is applicable to vehicle actors
+  // - In addition to pose related attributes that all actor types have, this service
+  //   additionally set vehicle specific attributes such as wheel poses
+  rpc SetVehiclePoses(SetVehiclePosesRequest) returns (SetVehiclePosesResponse) {}
+
+  // Returns the requested actors' runtime attributes.
+  rpc GetRuntimeActors (GetRuntimeActorsRequest) returns (GetRuntimeActorsResponse) {}
+
+  // Returns the requested actors.
+  rpc GetActors (GetActorsRequest) returns (GetActorsResponse) {}
+
+  // Return actor poses in requested reference frame
+  rpc GetActorPoses (GetActorPosesRequest) returns (GetActorPosesResponse) {}
+
+   // Return geodetic coordinates from cartesian coordinates in requested frame
+  rpc GetGeodeticCoordinate(GetGeodeticCoordinateRequest) returns (GetGeodeticCoordinateResponse) {}
+
+  // Notify the scenario simulation engine that an actor action has completed
+  rpc NotifyActionComplete (NotifyActionCompleteRequest) returns (NotifyActionCompleteResponse) {}
+
+  // Send logic events.
+  rpc SendEvents (SendEventsRequest) returns (SendEventsResponse) {}
+
+  // Receive logic events.
+  rpc ReceiveEvents (ReceiveEventsRequest) returns (ReceiveEventsResponse) {}
+
+  // Returns the requested phase's runtime status.
+  rpc GetPhaseStatus (GetPhaseStatusRequest) returns (GetPhaseStatusResponse) {}
+
+  //////////////////////////////////////
+  // Simulation logging interface
+  //////////////////////////////////////
+
+  // Query the server for communication log. The query can be to return all the messages, info, warning or errors,
+  // messages pertaining to a particular client etc.
+  rpc QueryCommunicationLog(QueryCommunicationLogRequest) returns (QueryCommunicationLogResponse) {}
+
+  rpc EnableCommunicationLogging(EnableCommunicationLoggingRequest) returns (EnableCommunicationLoggingResponse) {}
+
+  // Query the server for communication log. The query can be to return all the messages, info, warning or errors,
+  // messages pertaining to a particular client etc.
+  rpc QueryWorldRuntimeLog(QueryWorldRuntimeLogRequest) returns (QueryWorldRuntimeLogResponse) {}
+
+  rpc EnableWorldRuntimeLogging(EnableWorldRuntimeLoggingRequest) returns (EnableWorldRuntimeLoggingResponse) {}
+
+  // Add a diagnostic message to the server. The diagnostic message can be information, warning or error.
+  rpc AddDiagnosticMessage(AddDiagnosticMessageRequest) returns (AddDiagnosticMessageResponse) {}
+
+  // Query the server for diagnostic messages. The query can be to return all the messages, info, warning or errors,
+  // messages pertaining to a particular client etc.
+  rpc QueryDiagnosticMessageLog(QueryDiagnosticMessageLogRequest) returns (QueryDiagnosticMessageLogResponse) {}
+}

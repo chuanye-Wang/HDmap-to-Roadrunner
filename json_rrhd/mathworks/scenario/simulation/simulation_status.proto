@@ -1,0 +1,103 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/condition_status.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+//    Simulation Status
+////////////////////////////////////////////////////////////////////////////////
+
+// Cause (or reason) of stopping a simulation
+message SimulationStopCause
+{
+  // Summary of the cause
+  string summary = 1;
+
+  // Type of cause
+  oneof type {
+    // Stop because simulation has completed normally
+    SimulationComplete simulation_complete = 2;
+    // Stop because simulation is failed
+    SimulationFailed simulation_failed = 3;
+  }
+}
+
+// Situation that a simulation run is failed
+message SimulationFailed
+{
+  // Type of failure
+  oneof type {
+    // Run into a failure condition specified by the scenario logic model
+    FailureStatus failure_status = 1;
+    // Scenario Simulation Engine (SSE) has detected an error (e.g., upon a client
+    // uploads an invalid scenario logic model)
+    EngineError engine_error = 2;
+    // A client has reported a fatal error and requested to stop the simulation
+    ClientError client_error = 3;
+  }
+}
+
+// Runtime status that causes the scenario to succeed
+message SuccessStatus
+{
+  // One or a combination of runtime conditions that have caused the success
+  repeated ConditionStatus status = 1;  
+}
+
+// Runtime status that causes the scenario to fail
+message FailureStatus
+{
+  // One or a combination of runtime conditions that have caused the failure
+  repeated ConditionStatus status = 1;
+}
+
+// Scenario Simulation Engine (SSE) has detected an error (e.g., upon a client 
+// uploads an invalid scenario logic model)
+message EngineError
+{
+}
+
+// A client has reported a fatal error and requested to stop the simulation
+message ClientError
+{
+}
+
+// Situation that a simulation run has completed normally
+message SimulationComplete
+{
+  // Type of simuation complete
+  oneof type {
+    // Scenario logic model ran to end without failures
+    SuccessStatus success_status = 1;
+    // Some simulation management client has requested the simulation to end
+    // (e.g., when a user clicks on the stop button on a playback control GUI)
+    StopRequested stop_requested = 2;
+    // The specified maximal simulation time has been reached
+    StopTimeReached stop_time_reached = 3;
+  }
+}
+
+// Some simulation management client has requested the simulation to end (e.g., when 
+// a user clicks on the stop button on a playback control GUI)
+message StopRequested
+{
+  // The client that has requested the simulation to stop
+  string client_id = 1;
+}
+
+// The specified maximal simulation time has been reached
+message StopTimeReached
+{
+}
+
+// Enumeration of co-simulation status
+enum SimulationStatus
+{
+  SIMULATION_STATUS_UNSPECIFIED = 0;
+  SIMULATION_STATUS_STOPPED = 1;
+  SIMULATION_STATUS_RUNNING = 2;
+  SIMULATION_STATUS_PAUSED = 3;
+}

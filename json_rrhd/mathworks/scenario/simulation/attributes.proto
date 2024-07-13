@@ -1,0 +1,31 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/common/array.proto";
+import "mathworks/scenario/common/core.proto";
+import "mathworks/scenario/common/geometry.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+// Custom attribute definitions
+////////////////////////////////////////////////////////////////////////////////
+
+message Attribute
+{
+  // Optional color for geometry visualization
+  common.ColorRGBA color = 1;
+  
+  // Optional name for this attribute
+  string name = 2;
+  
+  // Geometry types
+  oneof type {
+    common.Vector3 point = 3;
+    common.Path path = 4;
+    common.Data data = 5;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////

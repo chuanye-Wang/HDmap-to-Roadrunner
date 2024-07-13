@@ -1,0 +1,67 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/common/geometry.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Defines sensor detection coordinate systems
+enum SensorDetectionCoordinates
+{
+  SENSOR_DETECTION_COORDINATES_UNSPECIFIED = 0;
+  SENSOR_DETECTION_COORDINATES_WORLD_CARTESIAN = 1;
+  SENSOR_DETECTION_COORDINATES_HOST_CARTESIAN = 2;
+  SENSOR_DETECTION_COORDINATES_SENSOR_CARTESIAN = 3;
+  SENSOR_DETECTION_COORDINATES_SENSOR_SPHERICAL = 4;
+}
+
+// Defines the field of view for a sensor
+message FieldOfView
+{
+  double azimuth = 1; // radians
+  double elevation = 2; // radians
+}
+
+// Defines the operational range for a sensor
+message RangeLimits
+{
+  double min = 1;
+  double max = 2;
+}
+
+// Defines a sensor intersection with a target
+message RayIntersection
+{
+  common.Vector3 position = 1;
+  double distance = 2;
+  common.Vector3 normal = 3;
+  string target_id = 4;
+  string target_material = 5;
+  common.Vector3 ray_direction = 6;
+}
+
+// Defines a ray's path and interactions
+message RayPath
+{
+  common.Vector3 start_position = 1;
+  repeated RayInteraction interactions = 2;
+}
+
+// Defines ray interaction types 
+enum RayInteractionType
+{
+  RAY_INTERACTION_TYPE_UNSPECIFIED = 0;
+  RAY_INTERACTION_TYPE_DESTINATION = 1;
+  RAY_INTERACTION_TYPE_REFLECTION = 2;
+  RAY_INTERACTION_TYPE_EDGE_DIFFRACTION = 3;
+}
+
+// Defines a ray interaction
+message RayInteraction
+{
+  RayInteractionType interaction_type = 1;
+  RayIntersection intersection = 2;
+}

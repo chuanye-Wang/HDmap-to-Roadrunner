@@ -1,0 +1,45 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/cosim.proto";
+import "mathworks/scenario/simulation/event.proto";
+
+// gRPC service interface for management of multiple co-simulations
+service CoSimulationMgr
+{
+  //////////////////////////////////////
+  // Client connection and subscriptions
+  //////////////////////////////////////
+  
+  // Initialization function where a calling client is assigned an id.
+  rpc RegisterClient (RegisterClientRequest) returns (RegisterClientResponse) {}
+  
+  // Register the calling client as ready to proceed with the next update.
+  rpc SetReady (SetReadyRequest) returns (SetReadyResponse) {}
+
+  // Notify that the client is alive and busy
+  rpc SetBusy (SetBusyRequest) returns (SetBusyResponse) {}
+  
+  // Register the calling client to receive events.
+  // Note that this is a long-lived stream, and persists until the client or the server shuts down.
+  rpc SubscribeEvents (SubscribeEventsRequest) returns (stream Event) {}
+
+  //////////////////////////////////////
+  // Co-simulation management interface
+  //////////////////////////////////////
+
+  // Add scenario simulations
+  rpc AddSimulations (AddSimulationsRequest) returns (AddSimulationsResponse) {}
+
+  // Remove scenario simulations
+  rpc RemoveSimulations (RemoveSimulationsRequest) returns (RemoveSimulationsResponse) {}
+
+  // Get the currently added simulations
+  rpc GetSimulationServiceProfiles (GetSimulationServiceProfilesRequest) returns (GetSimulationServiceProfilesResponse) {}
+
+  // Launch batch simulations
+  rpc LaunchSimulations (LaunchSimulationsRequest) returns (LaunchSimulationsResponse) {}
+}

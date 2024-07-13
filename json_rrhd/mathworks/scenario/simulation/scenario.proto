@@ -1,0 +1,173 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/action.proto";
+import "mathworks/scenario/simulation/condition.proto";
+import "mathworks/scenario/simulation/custom_command.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+// Scenario data model
+////////////////////////////////////////////////////////////////////////////////
+
+// 
+// A Scenario object specifies how actors shall interact during a simulation.
+//
+// Scenario logic is modelled as a hierarchical state machine with Phase being the
+// basic building block. Besides a top level phase object that contains the state
+// transition logic of the scenario, a Scenario object also includes other top level
+// definitions such as all the logic events of this scenario.
+//
+message Scenario
+{
+  // Top level phase that contains directly or indirectly all other phases in the
+  // scenario
+  Phase root_phase = 1;
+
+  // Definition of some user-defined events that can be referenced in the scenario
+  repeated CustomCommand custom_events = 2;
+  
+  // Definition of user-defined actions that can be referenced in the scenario
+  repeated CustomCommand custom_actions = 3;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Phase data model
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// A Phase represents a stage of the simulation where one or multiple actors
+// interactively perform some actions.
+//
+// - A phase can contain other phases. If a phase contains other phase, the phase is
+//   a CompositePhase. Depending on how multiple child phases of a composite phase
+//   shall execute, a CompositePhase can be further categorized into SerialPhase,
+//   MixPhase etc.
+// - Otherwise, if a phase does not contain other phase, it is an ActionPhase that
+//   defines a single action or operation. ActionPhase can be further categorized
+//   into ActorAction, SystemAction etc.
+//
+message Phase
+{
+  // A string that uniquely identifies a phase of a scenario
+  string id = 1;
+
+  // An optional name of the phase
+  string name = 2; 
+
+  // An optional start condition of this phase
+  Condition start_condition = 3;
+
+  // An optional end condition of this phase
+  Condition end_condition = 4;
+
+  // System actions executed during this phase. If the phase is conditional (i.e. it
+  // includes a start condition), then the associated system action is only executed
+  // if the condition evaluates to true during execution of this containing phase.
+  repeated Phase system_actions = 6;
+  
+  // Type-specific phase data
+  oneof type {
+    // A type of a phase that contains other phases
+    CompositePhase composite_phase = 101;
+    // A type of a phase that does not contain other phase
+    ActionPhase action_phase = 102;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Data model for CompositePhase (phase containing other phases)
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// Depending on how multiple child phases of a composite phase are executed, a
+// CompositePhase can be further categorized into SerialPhase, MixPhase etc.
+// 
+message CompositePhase
+{
+  // Child phases that this CompositePhase contains
+  repeated Phase children = 1;
+
+  // Type of the CompositePhase based on how children are executed during simulation
+  oneof type {
+    // A type of a CompositePhase whose child phases are executed one after another
+    SerialPhase serial_phase = 101;
+    // A type of a CompositePhase whose child phases start and end execution at the
+    // same time
+    MixPhase mix_phase = 102;
+  }
+}
+
+//
+// A type of a CompositePhase whose child phases are executed one after another
+// 
+message SerialPhase
+{
+}
+
+//
+// A type of a CompositePhase whose child phases start and end execution at the same
+// time
+//
+message MixPhase
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Data model for ActionPhase (phase defining an action)
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// An ActionPhase is a type of a phase that does not contain other phase. An 
+// ActionPhase defines an action performed by an actor or the scenario simulation 
+// engine. It can be further categorized into ActorActionPhase and SystemActionPhase.
+//
+message ActionPhase
+{
+  // Actions of this phase
+  repeated Action actions = 1;
+
+  // Categorize based on type of work in this phase
+  oneof type {
+    // A type of ActionPhase that defines some actions of an actor
+    ActorActionPhase actor_action_phase = 101;
+    // A type of ActionPhase that defines some system operations
+    SystemActionPhase system_action_phase = 102;
+  }
+}
+
+// Controls whether an ActorActionPhase can automatically trigger creation of its actor
+enum ActorCreationMode
+{
+  // Equivalent to ACTOR_CREATION_MODE_AUTOMATIC
+  ACTOR_CREATION_MODE_UNSPECIFIED = 0;
+  // If the referenced actor does not exist when this phase is encountered, the actor
+  // will be created. Otherwise, the action will be applied to an existing actor.
+  ACTOR_CREATION_MODE_AUTOMATIC = 1;
+  // The referenced actor will be created when this phase is encountered. If the
+  // actor already exists, a simulation error will be raised.  
+  ACTOR_CREATION_MODE_CREATE = 2;
+  // The referenced actor must already exist when this phase is encountered.
+  // Otherwise, a simulation error will be raised.
+  ACTOR_CREATION_MODE_NO_CREATE = 3; 
+}
+
+//
+// A type of ActionPhase that defines some actions of an actor
+//
+message ActorActionPhase
+{
+  // The actor that performs the specified actions
+  string actor_id = 1;
+
+  ActorCreationMode creation_mode = 2;
+}
+
+//
+// A type of ActionPhase that defines some system operations
+//
+message SystemActionPhase
+{
+}

@@ -1,0 +1,133 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/common/geometry.proto";
+import "mathworks/scenario/simulation/comparison.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+//    Target
+////////////////////////////////////////////////////////////////////////////////
+
+// Description of target Speed
+// - Speed target can be absolute, or relative to another entity.
+message SpeedTarget
+{
+  oneof speed_value {
+    double value = 1;
+    DoubleRange range = 2;
+  }
+  SpeedReference speed_reference = 3;
+}
+
+message SpeedReference
+{
+  // Note: Must be left empty if if speed_comparison is SPEED_COMPARISON_ABSOLUTE
+  string reference_actor_id = 1;
+  SpeedComparison speed_comparison = 2;
+  ReferenceSamplingMode reference_sampling_mode = 3; 
+  ComparisonRule rule = 4;
+}
+
+// Actor lane change target
+//
+// Specifies the lane change target
+// - Lane change target can be relative to the current lane, or to another entity.
+message LaneChangeTarget
+{
+  oneof lane_number {
+    int32 value = 1;
+    Int32Range range = 2;
+  }
+  LaneReference lane_reference = 3; 
+}
+
+message LaneReference
+{
+  // Note: run-time reference lane id is deduced from the reference actor id.
+  // This can be the ego actor id if changing lane with respect to the current lane.
+  string reference_actor_id = 1;
+  LaneComparison lane_comparison = 2;
+}
+
+// Actor lateral offset target
+//
+// Specifies the lateral offset target
+// - Currently we only support lateral offset relative to the current lane.
+message LateralOffsetTarget
+{
+  // Positive values are to the right and negative values 
+  // are to the left with 0 representing no offset.
+  double offset_value = 1;
+}
+
+// Description of distance target
+//
+message DistanceTarget
+{
+  // Distance dimension (e.g., longitudinal, lateral, Euclidean)
+  DistanceDimensionType distance_dimension_type = 1;
+  
+  // Distance reference
+  DistanceReference distance_reference = 2;
+  
+  // Measure in time distance or space distance
+  DistanceType distance_type = 3;
+  
+  // Distance value
+  oneof distance_value {
+    double value = 4;
+    DoubleRange range = 5;
+  }
+}
+
+// Description of distance reference
+//
+message DistanceReference
+{ 
+  // Coordinate system used to measure distance and velocity
+  ActorCoordinateSystemType actor_coordinate_system_type = 1;
+  
+  // Relative position from actor to reference object
+  PositionComparison position_comparison = 2;
+  
+  // Measure from bounding boxes or from origins
+  MeasureFrom measure_from = 3;
+  
+  // Comparison rule (e.g., Distance(actor_id, reference) >= threshold)
+  DistanceComparison rule = 4;
+
+  // Type of the reference object
+  oneof reference_type {
+    // Reference object can be a point (actor to point distance)
+    common.Vector3 point = 5;
+    // Reference object can be another actor (actor to actor distance)
+    string reference_actor_id = 6;
+  }
+}
+
+// Description of parameter reference
+//
+message ParameterReference
+{
+  // Actor ID
+  string actor_id = 1;
+  
+  // Type of the parameter
+  ParameterType parameter_type = 2;
+  
+  // Name of the parameter
+  string parameter_name = 3;
+}
+
+// Enumeration of parameter type
+enum ParameterType
+{
+  PARAMETER_TYPE_UNSPECIFIED = 0;
+  // Actor parameter
+  PARAMETER_TYPE_ACTOR = 1;
+  // Behavior parameter
+  PARAMETER_TYPE_BEHAVIOR = 2;
+}

@@ -1,0 +1,90 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.common;
+
+/**
+   \brief Common color defintion. Component values are in the range [0,255].
+*/
+message ColorRGBA
+{
+  uint32 r = 1;
+  uint32 g = 2;
+  uint32 b = 3;
+  uint32 a = 4;
+}
+
+/**
+   \brief A sequence of 0 or more ColorRGBA.
+*/
+message ColorRGBAArray
+{
+  repeated ColorRGBA values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more string values.
+*/
+message StringArray
+{
+  repeated string values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more float values.
+*/
+message FloatArray
+{
+  repeated float values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more double values.
+*/
+message DoubleArray
+{
+  repeated double values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more bool values.
+*/
+message BoolArray
+{
+  repeated bool values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more int32 values.
+*/
+message Int32Array
+{
+  repeated int32 values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more uint32 values.
+*/
+message UInt32Array
+{
+  repeated uint32 values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more int64 values.
+*/
+message Int64Array
+{
+  repeated int64 values = 1;
+}
+
+/**
+   \brief A sequence of 0 or more uint64 values.
+*/
+message UInt64Array
+{
+  repeated uint64 values = 1;
+}
+
+

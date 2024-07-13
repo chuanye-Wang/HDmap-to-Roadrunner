@@ -1,0 +1,46 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+import "mathworks/scenario/common/geometry.proto";
+import "mathworks/scenario/scene/hd/common_attributes.proto";
+
+//
+// Message for barrier extrusion and type information
+//
+message BarrierTypeDefinition
+{
+  // Id of the barrier type definition
+  // This can be referenced by the barriers to describe the type information
+  // such as the geometry of the extrusion
+  //
+  string id = 1;
+
+  // Asset path pointing to the extrusion information of this barrier type
+  //
+  RelativeAssetPath extrusion_path = 2;
+}
+
+//
+// Message for barrier instances
+//
+message Barrier
+{
+  string id = 1;
+
+  // Base of barrier that the extrusion is repeated over
+  //
+  scenario.common.Vector3List geometry = 2;
+
+  // Reference to a barrier type definition
+  //
+  Reference barrier_type_ref = 3;
+
+  // Flips the barrier type orientation side-to-side
+  // Used to flip barrier extrusion geometry such as Guard Rails when
+  // the extrusion's primary face faces to one side
+  //
+  bool flip_laterally = 4;
+}

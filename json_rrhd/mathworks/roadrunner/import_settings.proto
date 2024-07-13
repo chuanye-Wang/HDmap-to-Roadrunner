@@ -1,0 +1,169 @@
+// Copyright (c) 2023, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.roadrunner;
+
+import "google/protobuf/wrappers.proto";
+import "mathworks/roadrunner/core.proto";
+import "mathworks/scenario/common/geometry.proto";
+
+enum ProjectionMode
+{
+  PROJECTION_MODE_UNSPECIFIED = 0;
+  PROJECTION_MODE_FULL_PROJECTION = 1;
+  PROJECTION_MODE_TRANSLATE_ONLY = 2;
+  PROJECTION_MODE_NO_PROJECTION = 3;
+}
+
+enum MedianLaneType
+{
+  MEDIAN_LANE_TYPE_UNSPECIFIED = 0;
+  MEDIAN_LANE_TYPE_MEDIAN = 1;
+  MEDIAN_LANE_TYPE_RAISED_MEDIAN = 2;
+}
+
+enum ImportStep
+{
+  IMPORT_STEP_UNSPECIFIED = 0;
+  IMPORT_STEP_LOAD = 1;
+  IMPORT_STEP_BUILD = 2;
+}
+
+message OpenDriveImportSettings
+{
+  google.protobuf.BoolValue import_signals = 1;
+  google.protobuf.BoolValue import_props = 2;
+  google.protobuf.BoolValue import_hoffset_relative_to_orientation = 3;
+
+  LaneOptions lane_options = 4;
+
+  // Offset of the imported OpenDRIVE scene, relative to the center of the RoadRunner scene.
+  scenario.common.Vector3 offset = 5; 
+
+  // Projection of imported OpenDRIVE scene.
+  // - If the projection is not set, then RoadRunner uses the file's projection.
+  // - If the file does not have projection information, then RoadRunner uses the scene's projection.
+  // - If both the scene and file do not have projection information, then RoadRunner uses
+  //   the Transverse Mercator projection centered at zero degrees latitude and longitude.
+  scenario.common.Projection projection = 6;
+  ProjectionMode projection_mode = 7;
+}
+
+message RoadRunnerHdMapImportSettings
+{
+  // Which import step to perform
+  // - If unset, both load and build are performed
+  ImportStep import_step = 1;
+
+  RoadRunnerHdMapLoadSettings load_settings = 2;
+
+  RoadRunnerHdMapBuildSettings build_settings = 3;
+}
+
+message RoadRunnerHdMapLoadSettings
+{
+  // Offset of the imported HD Map, relative to the center of the RoadRunner scene.
+  scenario.common.Vector3 offset = 1;
+
+  // Projection of the imported HD Map.
+  // - If the projection is not set, then RoadRunner uses the file's projection.
+  // - If the file does not have projection information, then RoadRunner uses the scene's projection.
+  // - If both the scene and file do not have projection information, then RoadRunner uses
+  //   the Transverse Mercator projection centered at zero degrees latitude and longitude.
+  scenario.common.Projection projection = 2;
+}
+
+message RoadRunnerHdMapBuildSettings
+{
+  google.protobuf.BoolValue fit_cross_sections = 1;
+  google.protobuf.BoolValue detect_asphalt_surfaces = 2;
+  google.protobuf.BoolValue clear_scene_of_existing_data = 3;
+  google.protobuf.DoubleValue curvature_blend = 4;
+  AutoDetectBridges auto_detect_bridges = 5;
+  EnableOverlapGroups enable_overlap_groups = 6;
+}
+
+message AutoDetectBridges
+{
+  google.protobuf.DoubleValue bridge_span_inflation = 1;
+}
+
+message EnableOverlapGroups
+{
+  // Whether or not overlap groups should be enabled. Default: true
+  google.protobuf.BoolValue enable = 1;
+
+  // The overlap group name. Default: "SceneBuild"
+  google.protobuf.StringValue group_name = 2;
+}
+
+message LaneOptions
+{
+  google.protobuf.BoolValue curb_lane_markings_to_curb_lanes = 1;
+  google.protobuf.BoolValue convert_lane_heights = 2;
+  MedianLaneType median_lane_type = 3;
+}
+
+message ActorAttributes
+{
+  // When setting the below actor attributes, follow the same 
+  // conventions as when setting variables via the UI or API.
+
+  // Name to be given to new actor.
+  string name = 1;
+
+  string id = 2;
+
+  string color = 3;
+
+  // Asset path in the RoadRunner asset library.
+  string asset_path = 4;
+
+   // Behavior asset path in the RoadRunner asset library.
+  string behavior_asset_path = 5;
+}
+
+message CsvTrajectoryImportSettings
+{
+  // Optional attributes to apply to the actor
+  ActorAttributes actor_attributes = 1;
+
+  // Time to delay (in seconds) before adding the actor to the scenario.
+  google.protobuf.DoubleValue spawn_time = 2;
+  
+  // Time to delay (in seconds) before removing the actor from the scenario.
+  google.protobuf.DoubleValue remove_time = 3;
+}
+
+message SdMapImportSettings
+{
+  SdMapBuildSettings build_settings = 1;
+}
+
+message SdMapBuildSettings
+{
+  SdMapDestructiveBuildOptions destructive_options = 1;
+  SdMapNonDestructiveBuildOptions non_destructive_options = 2;
+  SdMapSceneBuilderOptions scene_builder_options = 3;
+  AutoDetectBridges auto_detect_bridges = 4;
+  EnableOverlapGroups enable_overlap_groups = 6;
+}
+
+message SdMapDestructiveBuildOptions
+{
+  google.protobuf.BoolValue preserve_heights = 1;
+  google.protobuf.BoolValue clear_scene_of_existing_data = 2;
+}
+
+message SdMapNonDestructiveBuildOptions
+{
+  DrivingSide driving_side = 1;
+  google.protobuf.BoolValue enable_overlap_groups = 2;
+}
+
+message SdMapSceneBuilderOptions
+{
+  google.protobuf.BoolValue elevate_roads_by_layer = 1;
+  google.protobuf.BoolValue create_turn_lanes = 2;
+}

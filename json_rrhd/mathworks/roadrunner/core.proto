@@ -1,0 +1,12 @@
+// Copyright (c) 2023, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.roadrunner;
+
+enum DrivingSide
+{
+  DRIVING_SIDE_UNSPECIFIED = 0;
+  DRIVING_SIDE_LEFT = 1;
+  DRIVING_SIDE_RIGHT = 2;
+}

@@ -1,0 +1,133 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+
+////////////////////////////////////////////////////////////////////////////////
+// data model describing various relations between values and set of values
+////////////////////////////////////////////////////////////////////////////////
+
+// For relative actions (e.g. SpeedAction with a reference actor), 
+//	indicates when the reference value should be evaluated
+enum ReferenceSamplingMode
+{
+  REFERENCE_SAMPLING_MODE_UNSPECIFIED = 0;
+  // Reference value is evaluated once, at the start of the action
+  REFERENCE_SAMPLING_MODE_AT_ACTION_START = 1;
+  // Reference value is evaluated continously throughout the action
+  REFERENCE_SAMPLING_MODE_CONTINUOUS = 2;
+}
+
+// Indicates how a speed value (e.g. in a SpeedAction) should be interpreted
+enum SpeedComparison
+{
+  SPEED_COMPARISON_UNSPECIFIED = 0;
+  // Value is an absolute speed target
+  SPEED_COMPARISON_ABSOLUTE = 1;
+  // Value is ignored (reference entity's speed value is used)
+  SPEED_COMPARISON_SAME_AS = 2;
+  // Value is an amount faster than the reference entity's speed (slower than, if negative)
+  SPEED_COMPARISON_FASTER_THAN = 3;
+  // Value is an amount slower than the reference entity's speed (faster than, if negative)
+  SPEED_COMPARISON_SLOWER_THAN = 4;
+  // Value is ignored (speed and timings are derived from the actor's path)
+  //  - If used, PathPointTiming data must be provided on the actor's current path
+  SPEED_COMPARISON_FROM_PATH = 5;
+}
+
+enum LaneComparison
+{
+  LANE_COMPARISON_UNSPECIFIED = 0;
+  LANE_COMPARISON_SAME_AS = 1;
+  LANE_COMPARISON_LEFT_OF = 2;
+  LANE_COMPARISON_RIGHT_OF = 3;
+}
+
+enum LateralOffsetDirection
+{
+  LATERAL_OFFSET_DIRECTION_UNSPECIFIED = 0;
+  LATERAL_OFFSET_DIRECTION_TO_LEFT = 1;
+  LATERAL_OFFSET_DIRECTION_TO_RIGHT = 2;
+  LATERAL_OFFSET_DIRECTION_TO_CENTER = 3;
+}
+
+enum PositionComparison
+{
+  POSITION_COMPARISON_UNSPECIFIED = 0;
+  POSITION_COMPARISON_SAME_AS = 1;
+  POSITION_COMPARISON_AHEAD_OF = 2;
+  POSITION_COMPARISON_BEHIND = 3;
+  POSITION_COMPARISON_EITHER = 4;
+}
+
+enum DistanceComparison
+{
+  DISTANCE_COMPARISON_UNSPECIFIED = 0;
+  DISTANCE_COMPARISON_GREATER_THAN = 1;
+  DISTANCE_COMPARISON_LESS_THAN = 2;
+  DISTANCE_COMPARISON_EQUAL_TO = 3;
+}
+
+// Indicates how a distance is measured
+enum DistanceDimensionType
+{
+  DISTANCE_DIMENSION_TYPE_UNSPECIFIED = 0;
+  DISTANCE_DIMENSION_TYPE_LONGITUDINAL = 1;
+  DISTANCE_DIMENSION_TYPE_LATERAL = 2;
+  DISTANCE_DIMENSION_TYPE_EUCLIDEAN = 3;  
+}
+
+// Indicates how a headway distance is measured
+enum DistanceType
+{
+  DISTANCE_TYPE_UNSPECIFIED = 0;
+  // Space distance to maintain from reference actor, unit: meter
+  DISTANCE_TYPE_SPACE = 1;
+  // Time distance to maintain from reference actor, unit: second
+  DISTANCE_TYPE_TIME = 2;
+}
+
+// Indicates the reference of an actor used for distance measurement
+enum MeasureFrom
+{
+  MEASURE_FROM_UNSPECIFIED = 0;
+  // Distance measured from bounding boxes
+  MEASURE_FROM_BOUNDING_BOXES = 1;
+  // Distance measured from actor origins
+  MEASURE_FROM_ORIGINS = 2;
+}
+
+// Indicates the reference actor's coordinate system
+enum ActorCoordinateSystemType
+{
+  ACTOR_COORDINATE_SYSTEM_TYPE_UNSPECIFIED = 0;
+  // Lane-based s-t coordinate system from the actor's lane location
+  ACTOR_COORDINATE_SYSTEM_TYPE_LANE = 1;
+  // Cartesian XYZ coordinate system
+  ACTOR_COORDINATE_SYSTEM_TYPE_POSE = 2;
+}
+
+enum ComparisonRule
+{
+  COMPARISON_RULE_UNSPECIFIED = 0;
+  COMPARISON_RULE_EQUAL_TO = 1;
+  COMPARISON_RULE_GREATER_THAN = 2;
+  COMPARISON_RULE_LESS_THAN = 3;
+  COMPARISON_RULE_GREATER_OR_EQUAL = 4;
+  COMPARISON_RULE_LESS_OR_EQUAL = 5;
+  COMPARISON_RULE_NOT_EQUAL_TO = 6;
+}
+
+message DoubleRange
+{
+    double min = 1;
+    double max = 2;
+}
+
+message Int32Range
+{
+    int32 min = 1;
+    int32 max = 2;
+}

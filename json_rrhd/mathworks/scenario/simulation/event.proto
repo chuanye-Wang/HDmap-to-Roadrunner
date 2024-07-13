@@ -1,0 +1,262 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/action.proto";
+import "mathworks/scenario/simulation/actor.proto";
+import "mathworks/scenario/simulation/custom_command.proto";
+import "mathworks/scenario/simulation/scenario.proto";
+import "mathworks/scenario/simulation/simulation_settings.proto";
+import "mathworks/scenario/simulation/simulation_status.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+// Data model for simulation engine events
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// Simulation engine events are sent by the Scenario Simulation Engine (SSE) to
+// co-simulation clients. Some engine events request clients to perform certain
+// operations so that co-simulation can happen in a synchronous and coherent fashion.
+// These events require a co-simluation client to reply with a message that notifies
+// the requested operation has completed.
+//
+message Event
+{
+  // Priority of this event, suggesting which event should be processed first
+  // when multiple events occur at the same time.
+  int32 priority = 1;
+
+  // Whether this event requires a synchronous client to call 'SetReady'. After
+  // publishing an event that requires 'SetReady', the simulation engine will wait
+  // for all the synchronous clients to call 'SetReady', before it continues. This 
+  // ensures subsequent operations are based on a synchronous snapshot of the entire
+  // scenario system.
+  bool need_set_ready = 2;
+  
+  // Sender of this event
+  string sender_id = 3;
+  
+  // Receiver of this event
+  repeated string receiver_ids = 4;
+
+  // Type specific attributes
+  oneof type {
+    ////////////////////////////////////////////////////////////////////////////////
+    // \name Events for mananging client-server connections    
+    ///@{
+    // Event to notify that gRPC co-simulation server will shutdown
+    ServerShutdownEvent server_shutdown_event = 101;
+    // Event to notify that an event subscriber has been added
+    ClientSubscribedEvent client_subscribed_event = 102;
+    // Event to notify that an event subscriber has been removed
+    ClientUnsubscribedEvent client_unsubscribed_event = 103;
+    ///@}
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // \name Events for notifying changes in scene, scenario, simulation settings,
+    // and simulation status
+    ///@{
+    // Event to notify that the scene (e.g., map) has changed
+    SceneChangedEvent scene_changed_event = 111;
+    // Event to notify that the scenario has changed
+    ScenarioChangedEvent scenario_changed_event = 112;
+    // Event to notify that the simulation settings have changed
+    SimulationSettingsChangedEvent simulation_settings_changed_event = 113;
+    // Event to notify that the simulation status has changed
+    SimulationStatusChangedEvent simulation_status_changed_event = 114;
+    ///@}
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // \name Events for organizing a co-simulation with multiple clients
+    ///@{
+    // Event to notify that a simulation run is started. A synchronous co-simulation 
+    // client that listens to this event must reply with a SetReady call.
+    SimulationStartEvent simulation_start_event = 121;
+    // Event to notify that a simulation run will be ended. A synchronous co-
+    // simulation client that listens to this event must reply with a SetReady call.
+    SimulationStopEvent simulation_stop_event = 122;
+    // Event to notify clients to promote simulation clock to the next step, and 
+    // perform necessary updates. A synchronous co-simulation client that listens to 
+    // this event must reply with a SetReady call.
+    SimulationStepEvent simulation_step_event = 123;
+    // Event to notify clients to optionally log simulation results of the current 
+    // step. A synchronous co-simulation client that listens to this event must reply
+    // with a SetReady call.
+    SimulationPostStepEvent simulation_post_step_event = 124;
+    // Event to notify the client that manages test logic to update.
+    ScenarioUpdateEvent scenario_update_event = 125;
+    ///@}
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // \name Events for notifying clients with scenario logic commands
+    ///@{
+    // Event to notify clients to create an actor. A synchronous co-simulation client
+    // that listens to this event must reply with a SetReady call.
+    CreateActorEvent create_actor_event = 201;
+    // Notifies clients that an actor will be removed from the simulation. A synchronous 
+    // co-simulation client that listens to this event must reply with a SetReady call.
+    WillRemoveActorEvent remove_actor_event = 202;
+
+    // Event to notify an actor to perform a specified action
+    ActionEvent action_event = 211;
+    // Event to notify that an action has completed
+    ActionCompleteEvent action_complete_event = 212;
+    // User-defined event
+    CustomCommand user_defined_event = 213;
+    ///@}
+  }
+}
+
+// Event to notify that gRPC co-simulation server will shutdown
+message ServerShutdownEvent
+{
+}
+
+// Event to notify that an event subscriber has been added
+message ClientSubscribedEvent
+{
+  // The id of the client that subscribed for events
+  string client_id = 1;
+}
+
+// Event to notify that an event subscriber has been removed
+message ClientUnsubscribedEvent
+{
+  // The id of the client that unsubscribed from events
+  string client_id = 1;
+}
+
+// Event to notify that the scene (e.g., map) has changed
+message SceneChangedEvent
+{
+}
+
+// Event to notify that the scenario has changed
+message ScenarioChangedEvent
+{
+}
+
+// Event to notify that the simulation settings have changed
+message SimulationSettingsChangedEvent
+{
+  SimulationSettings simulation_settings = 1;
+}
+
+// Event to notify that the simulation status has changed
+message SimulationStatusChangedEvent
+{
+  // Current simulation status
+  SimulationStatus simulation_status = 1;
+}
+
+// Mode in which simulation is going to start
+enum SimulationStartMode
+{
+  SIMULATION_START_MODE_UNSPECIFIED = 0;
+  SIMULATION_START_MODE_NORMAL = 1;
+  SIMULATION_START_MODE_REPLAY = 2;
+}
+
+// Simulation start event. A co-simulation client that listens to this event must 
+// reply with a SetReady call.
+message SimulationStartEvent
+{
+  SimulationStartMode simulation_mode = 1;
+}
+
+// Simulation stop event. A co-simulation client that listens to this event must 
+// reply with a SetReady call.
+message SimulationStopEvent
+{
+  // Time of stop (in second)
+  double stop_time_seconds = 1;
+
+  // Total number of steps taken
+  int64 steps = 2;
+
+  // Cause of stop
+  SimulationStopCause cause = 3;
+}
+
+// Simulation step event. A co-simulation client that listens to this event must 
+// reply with a SetReady call.
+message SimulationStepEvent
+{
+  // Current simulation clock time (in second)
+  double elapsed_time_seconds = 1;
+
+  // Number of steps taken since start of simulation. 
+  //     elapsed_time_seconds = steps * step_size
+  int64 steps = 2;
+}
+
+// Simulation logging event. A co-simulation client that listens to this event must 
+// reply with a SetReady call.
+message SimulationPostStepEvent
+{
+}
+
+// Event to notify the client that manages scenario logic to update.
+message ScenarioUpdateEvent
+{
+}
+
+// Create actor event. A co-simulation client that listens to this event must reply 
+// with a SetReady call.
+message CreateActorEvent
+{
+  // Description of the new actor
+  // - The ActorSpec field of this object has been initialized with the static
+  //   specifications of the new actor
+  // - The ActorRuntime field of this object has been initialized with the Initial
+  //   runtime attributes of the new actor (e.g., initial pose, velocity etc.)
+  // When the nominated simulator client receives a create actor event, it should
+  // create an actor with the specified static and runtime attributes
+  Actor actor = 1;
+
+  // Descendants of the new actor that shall be created together. These descendant
+  // actors many time are attachments such as trailers, sensors, or other accessories
+  // of the actor, thus they need to be created in the same event.
+  repeated Actor descendants = 2;
+
+  // A phase object that specifies the initial actions of the newly created actor
+  Phase initial_phase = 3;  
+}
+
+ // Notifies clients that an actor will be removed from the simulation. A synchronous 
+ // co-simulation client that listens to this event must reply with a SetReady call.
+message WillRemoveActorEvent
+{
+  // Id of the to-be-removed actor
+  string actor_id = 1;
+
+  // Ids of the descendants of the to be removed actor, which will also be removed.
+  repeated string descendant_ids = 2;
+}
+
+// Action event for notifying clients to take an action with some constraints and 
+// objectives.
+message ActionEvent
+{
+  // Action phase associated with this event
+  Phase phase = 1;
+}
+
+// Action-complete event for notifying clients that an earlier dispatched action
+// has been completed.
+message ActionCompleteEvent
+{
+  // Id of the completed action
+  string action_id = 1;
+
+  // Id of the related actor
+  string actor_id = 2;
+
+  // Final status of this action, must be either ACTION_EVENT_STATUS_DONE or
+  // ACTION_EVENT_STATUS_INTERRUPTED 
+  ActionEventStatus final_status = 3;
+}
+
+////////////////////////////////////////////////////////////////////////////////

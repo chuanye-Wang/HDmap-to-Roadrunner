@@ -1,0 +1,42 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+import "mathworks/scenario/scene/hd/common_attributes.proto";
+import "mathworks/scenario/common/geometry.proto";
+
+//
+// Message for sign features and type information
+//
+message SignTypeDefinition
+{
+
+  // Id of the sign type definition.
+  // This can be referenced by signs to describe the type information.
+  //
+  string id = 1;
+
+  // Asset path pointing to information about this sign type.
+  // This is usually an image of the sign or sign asset file.
+  //
+  RelativeAssetPath asset_path = 2;
+}
+
+//
+// Message for sign instances
+//
+message Sign
+{
+  string id = 1;
+
+  // Sign is represented as an oriented bounding box.
+  // See GeoOrientation3 definition for how to handle rotations.
+  //
+  scenario.common.GeoOrientedBoundingBox geometry = 2;
+
+  // Reference to a sign type definition.
+  //
+  Reference sign_type_ref = 3;
+}

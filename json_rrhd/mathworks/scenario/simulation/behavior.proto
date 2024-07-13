@@ -1,0 +1,96 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/simulation/attributes.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+// Behavior data model
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// \brief Data model of the behavior of an actor
+//
+// Specify runtime behavior of an actor at the interface level. Include
+// information such as 
+// - Required simulation platform and capabilities
+// - Location of the implementations for simulating this behavior
+// - Simulation interface such as runtime tunable attributes
+//
+message Behavior
+{
+  // Identity
+  string id = 1;
+
+  // Asset relative path (contains file extension)
+  string asset_reference = 2;
+
+  // Runtime tunable parameters
+  repeated Attribute parameters = 3;
+
+  // Simulation platform specific configurations
+  oneof platform_type {
+    RoadRunnerBehavior roadrunner_behavior = 4;
+    SimulinkBehavior simulink_behavior = 5;
+    ExternalBehavior external_behavior = 6;
+    NoBehavior no_behavior = 7;
+	
+  }
+}
+
+// 
+// \brief Data model for RoadRunner-specific actor behavior specifications
+// 
+message RoadRunnerBehavior
+{
+}
+
+enum BehaviorFormat
+{
+  BEHAVIOR_FORMAT_UNSPECIFIED = 0;
+  BEHAVIOR_FORMAT_SIMULINK_MODEL = 1;
+  BEHAVIOR_FORMAT_MATLAB_SYSTEM_OBJECT = 2;
+}
+
+enum SimulationMode
+{
+  SIMULATION_MODE_UNSPECIFIED = 0;
+  SIMULATION_MODE_INTERPRETED = 1;
+  SIMULATION_MODE_ACCELERATED = 2;
+}
+
+// 
+// \brief Data model for MATLAB/Simulink-specific actor behavior specifications
+// 
+message SimulinkBehavior
+{
+  // Location of simulation artifacts (file path, name and extension)
+  string artifact_location = 1;
+
+  // Implementation format of this behavior
+  BehaviorFormat behavior_format = 2;
+
+  // Simulation mode (e.g. interpreted execution or accelerated simulation
+  // via code generation)
+  SimulationMode simulation_mode = 3;
+}
+
+// 
+// \brief Data model for external simulation platform actor behavior specifications
+// 
+message ExternalBehavior
+{
+  string platform_name = 1;
+  string model_location = 2;
+}
+
+// 
+// \brief Behavior type for actors with no assigned behavior
+// 
+message NoBehavior
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////

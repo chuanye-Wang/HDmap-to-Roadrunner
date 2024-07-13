@@ -1,0 +1,38 @@
+// Copyright 2021 The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+import "mathworks/scenario/scene/hd/common_attributes.proto";
+
+//
+// Message for lane marking definitions
+//
+message LaneMarking
+{
+  // Id of the lane marking element
+  // This can be referenced by the lane elements
+  // using MarkingReference message
+  //
+  string id = 1;
+  
+  // To define the lane markings on a span
+  // RelativeAssetPath can be used to reference 
+  // existing marking assets in the library.
+  // 
+  RelativeAssetPath asset_path = 2;
+}
+
+//
+// Markings created in HD Map can be referred by 
+// other objects using MarkingReference.
+//
+message MarkingReference
+{
+  Reference marking_id = 1;
+  
+  // Flips the marking orientation side-to-side
+  //
+  bool flip_laterally = 2;
+}

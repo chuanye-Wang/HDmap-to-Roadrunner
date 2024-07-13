@@ -1,0 +1,73 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+////////////////////////////////////////////////////////////////////////////////
+// DynamicsShape data model
+////////////////////////////////////////////////////////////////////////////////
+
+// Defines how a target value will be acquired (with a constant rate, 
+// within a defined time, in a defined distance).
+enum DynamicsDimension
+{
+  DYNAMICS_DIMENSION_UNSPECIFIED = 0;
+  // Attain speed goal with a given acceleration
+	// - Dynamics value represents an acceleration (in m/s^2). 
+	// - Acceleration changes instantaneously (dynamics dimension is ignored)
+  DYNAMICS_DIMENSION_RATE = 1;
+  // Attain speed goal over a given time
+  // - Dynamics value represents a time in seconds
+  DYNAMICS_DIMENSION_TIME = 2;
+  // Attain speed goal over a given distance
+	// - Dynamics value represents a distance in meters
+  DYNAMICS_DIMENSION_DISTANCE = 3;
+}
+
+// Function type used to represent the change of a given variable over time or distance.
+enum DynamicsShape
+{
+  DYNAMICS_SHAPE_UNSPECIFIED = 0;
+  DYNAMICS_SHAPE_LINEAR = 1;
+  DYNAMICS_SHAPE_CUBIC = 2;
+  DYNAMICS_SHAPE_STEP = 3;
+}
+
+// Specifying the dynamics of a value transition and  
+// defining how the value changes over time or distance
+message TransitionDynamics
+{
+  DynamicsDimension dimension = 1;
+  DynamicsShape shape = 2;
+  double value = 3;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// This is for actions which only support a dimension of time.
+message TimeTransitionDynamics
+{
+  DynamicsShape shape = 1;
+  // The time over which the transition is to occur.
+  double time_value = 2;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Dynamic attributes constraints
+// - Dynamic attributes can be unlimited with empty dynamic_limit
+message DynamicConstraints
+{
+  DynamicLimit dynamic_limit = 1;
+}
+
+// Limit for dynamic attributes
+message DynamicLimit
+{
+  double max_speed = 1;
+  double max_acceleration = 2;
+  double max_deceleration = 3;
+}
+
+////////////////////////////////////////////////////////////////////////////////

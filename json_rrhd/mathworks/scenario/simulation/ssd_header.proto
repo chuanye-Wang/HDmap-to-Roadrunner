@@ -1,0 +1,20 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.scene.simulation;
+
+
+// The following schema defines general information about a RoadRunner SSD 
+// SSD payload, including author and ssd version information.
+// A RoadRunner SSD asset file will be in the following format:
+// (Varint) HeaderSize > Header Message > RoadRunner SSD Message
+// The Header Message should be delimited by the size of the message
+// More information on encodings and Varint size can be referred here: 
+//    https://developers.google.com/protocol-buffers/docs/encoding
+//    https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.io.coded_stream
+//
+message Header {
+    string author = 1;    
+}
+	

@@ -1,0 +1,444 @@
+﻿// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/common/coordinate_system.proto";
+import "mathworks/scenario/common/core.proto";
+import "mathworks/scenario/common/geometry.proto";
+import "mathworks/scenario/simulation/attributes.proto";
+import "mathworks/scenario/simulation/behavior.proto";
+import "mathworks/scenario/simulation/scenario.proto";
+import "mathworks/scenario/simulation/sensor.proto";
+import "mathworks/scenario/scene/hd/common_attributes.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+// Actor data model
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// An actor is a dynamic system in a scenario. Depending on whether the values
+// of the system change over time, an actor can be modelled with:
+// - Actor specifications: a set of static properties that are not varying
+//   during a simulation
+// - Actor runtime: a set of runtime states that are dynamically changing
+//   during a simulation
+//
+message Actor
+{
+  // Static (or non-runtime-varying) properties of an actor
+  ActorSpec actor_spec = 1;
+
+  // Runtime states of an actor
+  ActorRuntime actor_runtime = 2;
+ }
+
+////////////////////////////////////////////////////////////////////////////////
+// Static specifications of actors
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// \brief Data model for static specifications of an actor
+//
+// These specifications do not change during a simulation of the actor, including:
+// - Identifier
+// - Appearance
+// - Behavior type and simulator
+// - Optional custom static attributes
+// - Additional actor type specific specifications
+//
+message ActorSpec
+{
+  // A string that uniquely identifies the actor in a scenario
+  string id = 1;
+  // Name of the actor
+  string name = 2;
+
+  // 3D appearance (contains asset file name and extension)
+  string asset_reference = 3;
+  // 3D model-space bounds
+  common.Box3 bounding_box = 4;
+
+  // Identifier of the behavior model that implements dynamic behavior of the actor.
+  // Complete specifications of behavior models are available on the WorldSpec object.
+  string behavior_id = 5;
+  // Identifier of the simulation client that executes this behavior
+  string simulator_id = 6;
+
+  // Optional custom static attributes
+  repeated Attribute attributes = 7;
+
+  // Actor type specific static attributes
+  oneof type {
+    // Additional attributes of a world actor
+    WorldSpec world_spec = 101;
+    // Additional attributes of a vehicle actor
+    VehicleSpec vehicle_spec = 102;
+    // Additional attributes of a character actor
+    CharacterSpec character_spec = 103;
+    // Additional attributes of a sensor actor
+    SensorSpec sensor_spec = 104;
+	  // Additional attributes of a miscellaneous actor
+    MiscellaneousSpec miscellaneous_spec = 105;
+    // Additional attributes of a prop reference actor
+    PropReferenceSpec prop_reference_spec = 106;
+  }
+}
+
+// Additional specifications for a world actor
+message WorldSpec
+{
+  // Actors modelled in this world
+  repeated Actor actors = 1;
+
+  // Actor behavior models
+  repeated Behavior behaviors = 2;
+
+  // Top-level scenario logic model
+  Scenario scenario = 3;
+
+  // A coordinate system set up by the world actor, used by
+  // - Scene/map of the world to specify, e.g., points on a lane boundary
+  // - Scenario logic of the world to define, e.g., points in a reference path
+  // - Attached or contained child actors to express their poses
+  common.CoordinateReferenceSystem coordinate_system = 4;
+}
+
+// Additional specifications for a vehicle actor
+message VehicleSpec
+{
+  // Paint color of the vehicle
+  common.ColorRGBA paint_color = 1;
+  
+  // Specifications for the wheels
+  // Ordered Left-Right, Front to Back
+  // (e.g. Front Left, Front Right, Rear Left, Rear Right)
+  repeated WheelSpec wheels = 2;
+}
+
+// Specifications for a vehicle wheel
+message WheelSpec
+{
+  // Increasing values towards the back
+  // - Axle zero is the front axle.
+  int32 axle_index = 1;
+
+  // Offsets relative to the model origin
+  common.Vector3 wheel_offset = 2;
+
+  // Wheel radius in meter
+  double wheel_radius = 3;
+}
+
+// Additional specifications for a character actor
+message CharacterSpec
+{
+}
+
+// Additional specifications for a sensor actor
+message SensorSpec
+{
+  // Field of view of the sensor
+  FieldOfView field_of_view = 1;
+
+  // Operational range of the sensor
+  RangeLimits range_limits = 2;
+
+  // Coordinate system of detections
+  SensorDetectionCoordinates detection_coordinates = 3;
+}
+
+// Additional specifications for a miscellaneous actor
+message MiscellaneousSpec
+{
+}
+
+// Additional specifications for a prop reference actor
+message PropReferenceSpec
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Data model for runtime values of an actor
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// These runtime values may change during a simulation of an actor.
+// - Containment of actors: which actor contains this actor, and which actors
+//   this actor contains
+// - Motion dynamics: such as position, heading, velocity, angular velocity
+// - Optional custom runtime attributes
+// - Actor type specific runtime attributes
+//
+message ActorRuntime
+{
+  // Actor identifier
+  string id = 1;
+
+  // The actor that contains this actor
+  string parent = 2;
+  // Actors that this actor contains
+  repeated string children = 3;
+  // Any physical connections between this actor and its children
+  repeated Connection connections = 4;
+
+  // 3D transformation matrix (containing position and heading) in the world
+  // coordinate system
+  Transform pose = 11;
+  // Velocity (in m/s)
+  common.Vector3 velocity = 12;
+  // Angular velocity (in radian/s)
+  common.Vector3 angular_velocity = 13;
+  // Actor lane locations
+  ActorLaneLocations actor_lane_locations = 14;
+
+  // 3D transformation matrix in the parent actor's frame of reference
+  Transform local_pose = 31;
+  // Velocity in local frame (m/s)
+  common.Vector3 local_velocity = 32;
+  // Angular velocity in local frame (radian/s)
+  common.Vector3 local_angular_velocity = 33;
+
+  // Optional custom runtime behavior parameters
+  repeated Attribute behavior_parameters = 51;
+  // Optional custom runtime parameters
+  repeated Attribute parameters = 52;
+
+  // Actor type specific runtime attributes
+  oneof type {
+    // Additional runtime attributes of a world actor
+    WorldRuntime world_runtime = 101;
+    // Additional runtime attributes of a vehicle actor
+    VehicleRuntime vehicle_runtime = 102;
+    // Additional runtime attributes of a character actor
+    CharacterRuntime character_runtime = 103;
+    // Additional runtime attributes of a sensor actor
+    SensorRuntime sensor_runtime = 104;
+    // Additional runtime attributes of a miscellaneous actor
+    MiscellaneousRuntime miscellaneous_runtime = 105;
+    // Additional runtime attributes of a prop reference actor
+    PropReferenceRuntime prop_reference_runtime = 106;
+  }
+}
+
+//
+// A connection specifies how two actors are physically connected with each other
+// Examples of connections include:
+// - Trailer latches to a semi-truck
+// - Sensor mounts to a vehicle
+//
+message Connection
+{
+  // Connection type
+  ConnectionType connection_type = 1;
+
+  // Identifier of the first actor in this connection
+  string first_actor_id = 2;
+  // Location of the connection point on the first actor (in the actor's coordinate
+  // system)
+  common.Vector3 first_connection_point = 3;
+  
+  // Identifier of the second actor in this connection
+  string second_actor_id = 4;
+  // Location of the connection point on the second actor (in the actor's coordinate
+  // system)
+  common.Vector3 second_connection_point = 5;
+}
+
+// Connection type
+enum ConnectionType
+{
+  // The connection type is not specified
+  CONNECTION_TYPE_UNSPECIFIED = 0;
+  // Trailer mount
+  CONNECTION_TYPE_TRAILER = 1;
+  // Cargo mount
+  CONNECTION_TYPE_CARGO = 2;
+}
+
+// Pose related attributes of an actor.
+message ActorPose
+{  
+  // Identifier of the actor
+  string actor_id = 1;
+
+  // Frame of reference
+  ReferenceFrame reference_frame = 2;
+  // Any explicitly specified coordinate system. In-use only when the reference
+  // frame field is REFERENCE_FRAME_SPECIFIED
+  common.CoordinateSystemRef coordinate_system_ref = 6;
+
+  // 3D transformation matrix (containing position and heading)
+  Transform pose = 3;
+  // Velocity (in m/s)
+  common.Vector3 velocity = 4;
+  // Angular Velocity (in radian/s)
+  common.Vector3 angular_velocity = 5;
+}
+
+// Frame of reference for an actor
+enum ReferenceFrame
+{
+  // The frame of reference is not specified
+  REFERENCE_FRAME_UNSPECIFIED = 0;
+  // Use the world actor as the frame of reference
+  REFERENCE_FRAME_WORLD = 1;
+  // Use the parent actor as the frame of reference. 
+  // - This option is convenient when the actor is contained by or attached to an
+  //   parent actor (e.g., passenger walking in a bus)
+  // - When the parent actor is the world actor, there is no difference with using
+  //   the world reference frame
+  REFERENCE_FRAME_PARENT = 2;
+  // Use an explicitly specified coordinate reference system as the reference frame
+  REFERENCE_FRAME_SPECIFIED = 3;
+}
+
+// Addtional runtime attributes of a world actor
+message WorldRuntime
+{
+}
+
+// Addtional runtime attributes of a vehicle actor
+message VehicleRuntime
+{
+  // Poses of wheels, reside in the vehicle's coordinate system
+  repeated Transform wheels = 1;
+  // Map locations of the vehicle
+  VehicleMapLocations vehicle_map_locations = 2 [deprecated = true];
+}
+
+// Pose related attributes of a vehicle. 
+message VehiclePose
+{
+  // Pose related attributes on the base actor type
+  ActorPose actor_pose = 1;
+
+  // Poses of wheels, reside in the vehicle's coordinate system
+  repeated Transform wheels = 2;
+}
+
+//
+// A VehicleMapLocations has the runtime map location of a vehicle
+//
+message VehicleMapLocations
+{
+  oneof type{
+    // VehicleMapLocationOnLanes contains the lane mapping of a vehicle in case of
+    // on lane(s).
+    VehicleMapLocationOnLanes on_lanes = 1;
+  }
+}
+
+// Note - this message is deprecated, see ActorLaneLocations instead.
+// VehicleMapLocationOnLanes contains the lane mapping of a vehicle in case of
+// on lane(s):
+// - on_lane_positions contain all enclosing lane(s) against the vehicle's
+// origin.
+// - best_aligned_lane_index points to one of the on_lane_positions with the
+// closest alignment angle against the lane center polyline's tangent.  
+//
+message VehicleMapLocationOnLanes
+{
+  // - on_lane_positions contain all enclosing lane(s) against the vehicle's
+  // origin.
+  repeated LanePosition on_lane_positions = 1;
+  // best_aligned_lane_index points to one of the on_lane_positions with the
+  // closest alignment angle against the lane center polyline's tangent.
+  int32 best_aligned_lane_index = 2;  
+  // Angle between the best lane position's tangent and the entity heading, unit: radians
+  double angle = 3;
+}
+
+//
+// ActorLaneLocations contains the lane mapping of an actor in case of
+// on lane(s):
+// - on_lane_positions contain all enclosing lane(s) against the actor's
+// origin.
+// - best_aligned_lane_index points to one of the on_lane_positions with the
+// closest alignment angle against the lane center polyline's tangent.  
+//
+message ActorLaneLocations
+{
+  // - on_lane_positions contain all enclosing lane(s) against the actor's
+  // origin.
+  repeated LanePosition on_lane_positions = 1;
+  // best_aligned_lane_index points to one of the on_lane_positions with the
+  // closest alignment angle against the lane center polyline's tangent.
+  int32 best_aligned_lane_index = 2;  
+  // Angle between the best lane position's tangent and the entity heading, unit: radians
+  double angle = 3;  
+}
+
+//
+// A LanePostion defines a position on a lane with a given lane ID, a parametric
+// value, and a lateral offset.
+//
+message LanePosition
+{
+  // Lane identity
+  string id = 1;  
+  // Parameterized value follows the lane's digitization direction
+  double s_value = 2;  
+  // Lateral offset relative to the lane centerline, unit: meter
+  double lane_offset = 3;  
+}
+
+//
+// An AlignedLaneSegment defines a range on a lane specified by start and end lane
+// positions. It also stores the angle between the lane segment’s tangent
+// (evaluated at closer end to the entity) and the entity's heading.
+//
+// For example, a vehicle orienting along the lane segment digitization direction
+// computes the alignment angle at the end position, and vice versa.
+//
+message AlignedLaneSegment
+{
+  // Lane identity
+  string id = 1;  
+  // Start and end lane positions follows the lane digitization direction
+  scene.hdmap.ParametricRange span = 2;
+  // Angle between the lane segment's tangent and the entity heading, unit: radians
+  double angle = 3;
+}
+
+// Additional runtime attributes of a character actor
+message CharacterRuntime
+{
+  // Bones of the character
+  repeated Bone bones = 1;
+}
+
+// Addtional runtime attributes of a miscellaneous actor
+message MiscellaneousRuntime
+{
+}
+
+// Addtional runtime attributes of a prop reference actor
+message PropReferenceRuntime
+{
+}
+
+// 3D transformation matrix
+message Transform
+{
+  common.Matrix4x4 matrix = 1;
+}
+
+// Bone of a character
+message Bone
+{
+  // Name of the bone
+  string name = 1;
+
+  // Local transform of the bone
+  Transform transform = 2; 
+}
+
+// Additional runtime attributes of a sensor actor
+message SensorRuntime
+{
+  repeated RayPath detections = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////

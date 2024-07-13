@@ -1,0 +1,137 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+import "mathworks/scenario/scene/hd/common_attributes.proto";
+import "mathworks/scenario/scene/hd/hd_lane_markings.proto";
+import "mathworks/scenario/common/geometry.proto";
+
+// Indicates traffic flow direction of a lane, 
+// with respect to the lane’s digitization direction
+//
+enum TravelDir 
+{
+  TRAVEL_DIR_UNSPECIFIED = 0;
+  TRAVEL_DIR_UNDIRECTED = 1;
+  TRAVEL_DIR_FORWARD = 2;
+  TRAVEL_DIR_BACKWARD = 3;
+  TRAVEL_DIR_BIDIRECTIONAL = 4;
+}
+
+// Types of Lanes
+//
+enum LaneType 
+{
+  LANE_TYPE_UNSPECIFIED = 0;
+  LANE_TYPE_DRIVING = 1;
+  LANE_TYPE_SHOULDER = 2;
+  LANE_TYPE_BORDER = 3;
+  LANE_TYPE_RESTRICTED = 4;
+  LANE_TYPE_PARKING = 5;
+  LANE_TYPE_CURB = 6;
+  LANE_TYPE_SIDEWALK = 7;
+  LANE_TYPE_CENTER_TURN = 8;
+  LANE_TYPE_BIKING = 9;
+  LANE_TYPE_ENTRY = 10;
+  LANE_TYPE_EXIT = 11;
+  LANE_TYPE_OFFRAMP = 12;
+  LANE_TYPE_ONRAMP = 13;
+  LANE_TYPE_STOP = 14;
+  LANE_TYPE_MEDIAN = 15;
+  LANE_TYPE_NONE = 16;
+}
+	 
+//
+// \brief A Lane represents an enclosed region with a dominant 
+// digitization direction and assigned usage characteristics
+//
+// Lanes optionally contain a geometry representing the rough 
+// center of the lane, which must extend from the start of the lane until the end
+//
+// Lanes optionally contain references to the lane boundaries on either side of the lane
+//
+// Lanes contain references to the lanes connected at the \b start 
+// (\em predecessors) and \b end (\em successors) of the lane
+//
+// A lane need not have the same digitization direction as its referenced lanes and lane boundaries. 
+// For example, a lane’s geometry could be digitized increasing along the \a X axis, 
+// while it’s lane boundaries could be digitized decreasing along the \a X axis. 
+// The reference’s ‘alignment’ field is used to describe the relative digitization direction.
+//
+message Lane
+{
+  string id = 1;
+  scenario.common.Vector3List geometry = 2;
+  TravelDir travel_dir = 3;
+  AlignedReference left_lane_boundary = 4;
+  AlignedReference right_lane_boundary = 5;
+  repeated AlignedReference predecessors = 6;
+  repeated AlignedReference successors = 7;
+  LaneType lane_type = 8;
+  repeated Metadata metadata = 9;
+
+}
+
+//
+// Parametric span range on linear geometry.
+// 
+message ParametricAttribution 
+{
+  // The range for which the parametric attributes
+  // are valid.
+  //
+  ParametricRange span = 1;
+
+  oneof attributes{
+    
+    // Reference to the markings defined in RoadRunner HD Map
+    // The parametric attribute defined by the span will
+    // hold the reference to the ID of the Lane marking.
+    //
+    MarkingReference marking_reference = 2;
+  }
+}
+
+//
+// \brief A LaneBoundary defines the border of a lane.
+//
+// One or more lanes can optionally contain reference to lane boundaries
+// on either of their side.
+//
+// Lane Boundaries optionally contain definitions for certain parametric
+// attributes. These attributes define the lane markings over a span.
+//
+// \note Multiple Lane markings can be spanned over a lane boundary
+// as a parametric range between [0, 1] of the boundary's length
+//
+message LaneBoundary 
+{
+  string id = 1;
+  scenario.common.Vector3List geometry = 2;
+  repeated ParametricAttribution parametric_attributes = 3;
+}
+
+//
+// \brief LaneGroup is collection of lanes
+//
+// The LaneGroup geometry can be used as a general approximation
+// for the geometry of the lanes contained in the group. 
+// It is recommended (but not required) that this geometry lies in 
+// between directions of travel.
+//
+// Hierarchy of Lane Elements:
+// - Lane group has references to the lanes
+// - Lane has references to its boundaries and 
+// its connected lanes
+// - Lane Boundary has reference to the Lane markings
+//
+// \note Defining Lane Groups in HD Map is optional
+//
+message LaneGroup
+{
+  string id = 1;
+  scenario.common.Vector3List geometry = 2;
+  repeated AlignedReference lanes = 3;
+}

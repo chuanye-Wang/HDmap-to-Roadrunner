@@ -1,0 +1,161 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+import "mathworks/scenario/simulation/actor.proto";
+import "mathworks/scenario/simulation/event.proto";
+import "mathworks/scenario/simulation/simulation_settings.proto";
+
+package mathworks.scenario.simulation;
+
+////////////////////////////////////////////////////////////////////////////////
+// Data Model for Logging
+////////////////////////////////////////////////////////////////////////////////
+//
+// \brief Data model logging. 
+//
+// CommunicationLog holds a log of all client to server and server to client
+// communication, along with the times when this communication happened. The client
+// to server communication is represented by 'RemoteProcedureCall'. And server to
+// client communication is represented by 'PublishMessage'.
+//
+
+message Timestamp {
+  // Represents seconds of UTC time since Unix epoch
+  // 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+  // 9999-12-31T23:59:59Z inclusive.
+  int64 seconds = 1;
+
+  // Non-negative fractions of a second at nanosecond resolution. Negative
+  // second values with fractions must still have non-negative nanos values
+  // that count forward in time. Must be from 0 to 999,999,999
+  // inclusive.
+  int32 nanos = 2;
+}
+
+// A time stamp to hold both the simulation time and the wall clock time
+message TimeStamp
+{
+  // Simulation time in seconds (-1 if simulation had not started,
+  // Example: Client 'MATLAB' connected to server message)
+  double simulation_time = 1; 
+
+  Timestamp wall_clock_time = 2; // Wall clock time
+}
+
+// The chronological log of communication between server->client & client->server
+message CommunicationLog
+{
+  repeated Communication communication_log = 1;
+}
+
+message Communication
+{
+  TimeStamp time_stamp = 1;
+ 
+  oneof type {
+    // Client->Server gRPC call
+    RemoteProcedureCall rpc_call = 101;
+
+    // Server->Client publish message
+    PublishMessage published_message = 102;
+  }
+}
+
+// Encapsulates client to server communication
+message RemoteProcedureCall
+{
+  // Id of the client making the request
+  string client_id = 1;
+
+  // Name of the service requested (Set it using Reflection?)
+  string service_name = 2;
+
+  // Did the request succeed (1) or fail (0)?
+  bool success = 3;
+}
+
+// Encapsulates server to client communication
+message PublishMessage
+{
+  string message_type = 1;      // The name of the service published by server (set it using reflection?)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// A log containing the states of the world for a given simulation run
+message WorldRuntimeStateLog
+{
+  repeated WorldRuntimeState world_states = 1;
+
+  // The simulation settings corresponding to the log
+  SimulationSettings simulation_settings = 2;
+}
+ 
+// The state of all the actors at a given point in time
+message WorldRuntimeState
+{
+  // Time when actor runtime state was captured
+  TimeStamp time_stamp = 1;
+
+  // A sequence of actor runtimes
+  repeated ActorRuntime actor_runtimes = 2;
+
+  // User defined events sent to actors
+  repeated Event simulation_events = 3;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// The message log on the server side
+message DiagnosticMessageLog
+{
+  repeated DiagnosticMessage diagnostic_messages = 1;
+}
+ 
+// A diagnostic message for different types of messages issued by the server as well as the clients (errors, warnings, information)
+message DiagnosticMessage
+{
+  // The client ID of the client publishing the message (in the case of server, its 'server')
+  string client_id = 1;
+
+  // The name of the client (need not be unique and not used to query the log)
+  string client_name = 2;
+
+  // The time when the message was published
+  TimeStamp time_stamp = 3;
+
+  // Indicates whether the message is info, warning or error
+  DiagnosticType diagnostic_type = 4;
+
+  // The message itself
+  string diagnostic_message = 5;
+}
+ 
+// The diagnostic message type (error, warning, information etc.)
+enum DiagnosticType
+{
+  // Unknown type (default)
+  UNKNOWN_TYPE = 0;
+
+  // For any general information
+  INFORMATION_TYPE = 1;
+
+  // For non-critical warnings
+  WARNING_TYPE = 2;
+
+  // For critical errors
+  ERROR_TYPE = 3;
+}
+
+message RuntimeLogMetadata
+{
+  // Project directory path
+  string project_folder = 1;
+
+  // Scenario file path
+  string scenario_file_path = 2;
+
+  // Scenario file checksum
+  string scenario_checksum = 3;
+}

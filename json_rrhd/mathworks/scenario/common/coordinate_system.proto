@@ -1,0 +1,78 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.common;
+
+import "mathworks/scenario/common/geometry.proto";
+
+//
+// A Coordinate Reference System (a.k.a. Spatial Reference System) precisely measures
+// locations on the surface of the Earth as coordinates. These coordinates are used
+// by scenes (maps and meshes), scenario logic, and actors.
+//
+message CoordinateReferenceSystem
+{
+  oneof type {
+    // Cartesian coordinate system that uses a specific map projection (e.g.,
+    // Universal Transverse Mercator) to create a planar surface from the curved
+    // earth surface
+    Projection projected_coordinate_system = 11;
+    // Spherical coordinate system that measures locations on the earth (modelled as
+    // ellipsoid) using latitude, longtitude, and altitude
+    GeographicCoordinateSystem geographic_coordinate_system = 12;
+    // Earth-Centered, Earth-Fixed (ECEF) Cartesian coordinate system
+    GeocentricCoordinateSystem geocentric_coordinate_system = 13;
+    // Cartesian coordinate system that is defined for a local and small area, over
+    // which the curvature of the earth can be safely approximated as flat without
+    // significant distortion. Local tangent plane coordinates are a type of
+    // engineering coordinate system used in aviation and marine vehicles
+    EngineeringCoordinateSystem engineering_coordinate_system = 14;
+  }
+}
+
+// Geodetic coordinate system with latitude, longitude, and ellipsoidal height coordinates
+message GeographicCoordinateSystem
+{
+}
+
+// Earth-centered, earth-fixed coordinate system (ECEF). WGS84 datum is used.
+message GeocentricCoordinateSystem
+{
+}
+
+// Cartesian coordinate system that is defined for a local and small area, over which
+// the curvature of the earth can be safely approximated as flat without significant
+// distortion. Local tangent plane coordinates are a type of engineering coordinate
+// system used in aviation and marine vehicles
+message EngineeringCoordinateSystem
+{
+  // Geodetic location {latitude, longitude, altitude} of the engineering coordinate
+  // system. An east, north, up (ENU) tangent plane coordinate system is formed:
+  // - x axis points east along the latitude line
+  // - y axis points north along the longitude line
+  // - z axis points up
+  GeodeticCoordinates geodetic_origin = 1;
+}
+
+// Geodetic coordinates provide latitude, longitude, and altitude values that
+// identify a location relative to the earth ellipsoid.
+message GeodeticCoordinates
+{
+  // Latitude in degree, with range [-90, 90]
+  double latitude = 1;
+  // Longitude in degree, with range [-180, 180]
+  double longitude = 2;
+  // Height to the surface of the earth ellipsoid in meter
+  double altitude = 3;
+}
+
+// Reference to a Coordinate Reference System
+//
+message CoordinateSystemRef
+{
+  oneof type {
+    // Reference a coordinate system by explicitly specifying it
+    CoordinateReferenceSystem coordinate_system = 11;
+  }
+}

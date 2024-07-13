@@ -1,0 +1,139 @@
+// Copyright (c) 2022, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/common/geometry.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+//    Condition Status
+////////////////////////////////////////////////////////////////////////////////
+
+// Runtime status of a condition
+message ConditionStatus
+{
+  // Identity
+  string id = 1;
+  // Runtime state of a condition
+  ConditionState condition_state = 2;
+  // Type specific runtime status
+  oneof type {
+    // Runtime status of a DurationCondition
+    DurationConditionStatus duration_conditon_status = 101;
+    // Runtime status of a SimulationTimeCondition
+    SimulationTimeConditionStatus simulation_time_condition_status = 102;
+    // Runtime status of a DistanceCondition
+    DistanceConditionStatus distance_condition_status = 103;
+    // Runtime status of an ActionSpeedCondition
+    ActorSpeedConditionStatus actor_speed_condition_status = 104;
+    // Runtime status of a CollisionCondition
+    CollisionConditionStatus collision_condition_status = 105;
+    // Runtime status of an ActorLaneCondition
+    ActorLaneConditionStatus actor_lane_condition_status = 106;
+    // Runtime status of an OrCondition
+    OrConditionStatus or_condition_status = 107;
+    // Runtime status of an LateralOffsetCondition
+    LateralOffsetConditionStatus lateral_offset_condition_status = 108;
+    // Runtime status of an PhaseStateCondition
+    PhaseStateConditionStatus phase_state_condition_status = 109;
+    // Runtime status of an AndCondition
+    AndConditionStatus and_condition_status = 110;
+    // Runtime status of an EventCondition
+    EventConditionStatus event_condition_status = 111;
+  }
+}
+
+// Runtime state of a condition
+enum ConditionState
+{
+  // The condition is not initialized
+  CONDITION_STATE_UNSPECIFIED = 0;
+  // The condition is initialized, but has not yet been evaluated
+  CONDITION_STATE_NOT_YET_EVALUATED = 1;
+  // The condition was evaluated, but was not satisfied
+  CONDITION_STATE_UNSATISFIED = 2;
+  // The condition was evaluated, and was satisfied
+  CONDITION_STATE_SATISFIED = 3;
+}
+
+// Runtime status of a DurationCondition
+message DurationConditionStatus
+{
+  // Elapsed time since the start of this duration
+  double elapsed_time = 1;
+}
+
+// Runtime status of a SimulationTimeCondition
+message SimulationTimeConditionStatus
+{
+  // Current simulation time
+  double simulation_time = 1;
+}
+
+// Runtime status of a CartesianDistanceCondition
+message DistanceConditionStatus
+{
+  // Current minimal distance between the specified objects
+  double distance = 1;
+  
+  // Closest points on each object (bounding box is used for actor object)
+  common.Vector3 actor_point = 2;
+  common.Vector3 reference_object_point = 3;
+}
+
+// Runtime status of an ActorSpeedCondition
+message ActorSpeedConditionStatus
+{
+  // Current actor speed
+  double actor_speed = 1;
+}
+
+// Runtime status of a CollisionCondition
+message CollisionConditionStatus
+{
+  // Runtime collisions detected at current time
+  repeated Collision collisions = 1;
+}
+
+// Runtime collision between an actor and other actors
+message Collision
+{
+  // Identifier of the actor that collides with another actor
+  string actor_id = 1;
+
+  // The other actor that the actor collides with
+  string other_actor = 2;  
+}
+
+// Runtime status of an ActorLaneCondition
+message ActorLaneConditionStatus
+{
+}
+
+// Runtime status of an OrCondition
+message OrConditionStatus
+{
+  repeated ConditionStatus operands_status = 1;
+}
+
+// Runtime status of an LateralOffsetConditionStatus
+message LateralOffsetConditionStatus
+{  
+}
+
+// Runtime status of an PhaseStateCondition
+message PhaseStateConditionStatus
+{  
+}
+
+// Runtime status of an AndCondition
+message AndConditionStatus
+{
+  repeated ConditionStatus operands_status = 1;
+}
+
+// Runtime status of an EventCondition
+message EventConditionStatus
+{
+}

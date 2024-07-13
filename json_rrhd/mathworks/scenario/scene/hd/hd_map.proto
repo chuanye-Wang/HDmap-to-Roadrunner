@@ -1,0 +1,31 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = 'proto3';
+
+package mathworks.scenario.scene.hdmap;
+
+import "mathworks/scenario/scene/hd/hd_lanes.proto";
+import "mathworks/scenario/scene/hd/hd_lane_markings.proto";
+import "mathworks/scenario/scene/hd/hd_junctions.proto";
+import "mathworks/scenario/scene/hd/hd_barriers.proto";
+import "mathworks/scenario/scene/hd/hd_signs.proto";
+import "mathworks/scenario/scene/hd/hd_static_objects.proto";
+
+//
+// \brief RoadRunner HD Map is our scene model primarily intended for
+// interchanging HD Map data and Scenario Simulation
+//
+message HDMap
+{
+  repeated Lane lanes = 1;
+  repeated LaneBoundary lane_boundaries = 2;
+  repeated LaneGroup lane_groups = 3;
+  repeated LaneMarking lane_markings = 4;
+  repeated Junction junctions = 5;
+  repeated BarrierTypeDefinition barrier_types = 6;
+  repeated Barrier barriers = 7;
+  repeated SignTypeDefinition sign_types = 8;
+  repeated Sign signs = 9;
+  repeated StaticObjectTypeDefinition static_object_types = 10;
+  repeated StaticObject static_objects = 11;
+}

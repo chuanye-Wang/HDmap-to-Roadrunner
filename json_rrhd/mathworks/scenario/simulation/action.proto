@@ -1,0 +1,260 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/common/geometry.proto";
+import "mathworks/scenario/simulation/attributes.proto";
+import "mathworks/scenario/simulation/comparison.proto";
+import "mathworks/scenario/simulation/custom_command.proto";
+import "mathworks/scenario/simulation/targets.proto";
+import "mathworks/scenario/simulation/transition_dynamics.proto";
+
+////////////////////////////////////////////////////////////////////////////////
+// Action data model
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// An Action defines a single objective or operation for an actor or the simulation
+// engine to complete.
+//
+message Action
+{  
+  // A string that uniquely identifies the action in a scenario
+  string id = 1;  
+  
+  oneof type {
+    // An action for an actor to complete
+    ActorAction actor_action = 101;
+    // A system operation
+    SystemAction system_action = 102;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// ActorAction data model
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// ActorAction defines an action for an actor to complete.
+//
+message ActorAction
+{
+  // ID of the actor who performs this action. Note:
+  //  - If this action is contained within an ActorPhase, this field must 
+  //    have identical values with the ActorPhase's actor_id
+  string actor_id = 1;
+
+  // Interval of the phase to which this action applies (e.g., start, during, end)
+  PhaseInterval phase_interval = 2;
+
+  oneof type {
+    // Objectives and constraints for a lane change action
+    LaneChangeAction lane_change_action = 101;
+    // Objectives and constraints for a path action
+    PathAction path_action = 102;
+    // Objectives and constraints for a position action
+    PositionAction position_action = 103;
+    // Objectives and constraints for a speed action
+    SpeedAction speed_action = 104;
+    // Objectives and constraints for a change parameter action
+    ChangeParameterAction change_parameter_action = 105;
+    // Objectives and constraints for a lateral offset action
+    LateralOffsetAction lateral_offset_action = 106;
+    // Objectives and constraints for a Longitudinal Distance action
+    LongitudinalDistanceAction longitudinal_distance_action = 107;
+    // User-defined action
+    UserDefinedAction user_defined_action = 108;
+    // Remove actor from simulation
+    RemoveActorAction remove_actor_action = 109;
+  }
+}
+
+// Action to change speed. 
+message SpeedAction
+{
+  SpeedTarget speed_target = 1;
+  TransitionDynamics transition_dynamics = 2;
+  bool allow_negative_speed = 3;
+}
+
+// Objectives and constraints for a lane change action
+message LaneChangeAction
+{
+  LaneChangeTarget lane_change_target = 1;
+  TransitionDynamics transition_dynamics = 2;
+}
+
+// Objectives and constraints for a position action
+message PositionAction
+{
+  oneof position_value {
+    double value = 1;
+    DoubleRange range = 2;
+  }
+  PositionReference position_reference = 3;
+}
+
+message PositionReference
+{
+  string reference_actor_id = 1;
+  PositionComparison position_comparison = 2;
+}
+
+message PathPointTiming
+{
+  // Time (in seconds) at which the actor should arrive at the point
+  double time = 1;
+  // Speed (in m/s along the path) that the actor should be 
+  // traveling upon arrival at the point
+  double speed = 2;
+  // Time (in seconds) that the actor should wait upon arrival at the point, 
+  // before proceeding to the next point
+  //  - If non-zero, speed will be zero (actor should stop at this point)
+  double wait_time = 3;
+}
+
+// Objectives and constraints for a path action
+message PathAction
+{
+  common.Path path = 1;
+  string actor_id = 2;
+  // Optional per-point timing and velocity data
+  //  - If provided, must match the number of points in the path
+  repeated PathPointTiming timings = 3;
+  // Optional per-point orientation data
+  //  - If provided, must match the number of points in the path
+  //  - All orientation representations must use the same format
+  //	(i.e. either all euler angles or all rotation matrices)
+  repeated common.Orientation actor_orientations = 4;
+}
+
+// Objectives and constraints for a set parameter action
+message ChangeParameterAction
+{
+  // The to-be-changed parameter with its name and new value
+  Attribute parameter = 1;
+  
+  // Type of the to-be-changed parameter
+  ParameterType parameter_type = 101;
+}
+
+// Objectives and constraints for a lateral offset action
+message LateralOffsetAction
+{
+  LateralOffsetTarget lateral_offset_target = 1;
+  TimeTransitionDynamics transition_dynamics = 2;
+}
+
+// Objectives and constraints for a Longitudinal Distance action
+message LongitudinalDistanceAction
+{  
+  // Distance target
+  DistanceTarget distance_target = 1;  
+  // Whether this action is continuous (same as speed action)
+  ReferenceSamplingMode reference_sampling_mode = 2;
+  // Dynamic constraints for ego actor
+  DynamicConstraints dynamic_constraints = 3;
+}
+
+// Objectives and constraints for a lateral offset action
+message UserDefinedAction
+{
+  // The custom command that this action sends to the actor
+  CustomCommand custom_command = 1;
+
+  // Whether or not this action is instantaneous
+  // - instantaneous: the action will last for one step
+  // - not instantaneous: actor must notify if the action has completed
+  bool instantaneous = 2;
+}
+
+// Instructs the simulation engine to remove the referenced actor.
+message RemoveActorAction
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// SystemAction data model
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// A type of ActionPhase that defines a system operation 
+//
+message SystemAction
+{
+  // Type of the system operation
+  oneof type {
+    // Instructs the simulation engine to end the current run and marks it as
+    // successful
+    ScenarioSuccess scenario_success = 1;
+    // Instructs the simulation engine to end the current run and marks it as
+    // failed
+    ScenarioFailure scenario_failure = 2;
+    // Instructs the simulation engine to wait until the end condition for 
+    // the phase containing this action is satisfied.
+    WaitAction wait_action = 3;
+    // Instructs the simulation engine to send an event
+    SendEventAction send_event_action = 4;
+  }
+}
+
+//
+// An zero-time operation that notifies simulation engine the success of the current
+// run
+//
+message ScenarioSuccess
+{
+}
+
+//
+// An zero-time operation that notifies simulation engine the failure of the current
+// run
+//
+message ScenarioFailure
+{
+}
+
+// Instructs the simulation engine to wait until the end condition for 
+// the phase containing this action is satisfied.
+message WaitAction
+{
+}
+
+// Instruct the simulation engine to send an event
+message SendEventAction
+{
+  // This field should be event, but that introduces circular dependency (not allowed by protobuf)
+  // So leave this as custom command for now. 
+  CustomCommand custom_command = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Supplementary data model
+////////////////////////////////////////////////////////////////////////////////
+
+// Phase interval enumeration
+enum PhaseInterval
+{
+  PHASE_INTERVAL_UNSPECIFIED = 0;
+  PHASE_INTERVAL_AT_START = 1;
+  PHASE_INTERVAL_AT_END = 2;
+  PHASE_INTERVAL_INVARIANT = 3;
+}
+
+// Action event dispatch status
+enum ActionEventStatus
+{
+  ACTION_EVENT_STATUS_UNSPECIFIED = 0;
+  // Action event has been dispatched
+  ACTION_EVENT_STATUS_DISPATCHED = 1;
+  // Action event has been interrupted/cancelled after it is dispatched
+  ACTION_EVENT_STATUS_INTERRUPTED = 2;
+  // Action event has been skipped/preempted by another conflicting action
+  ACTION_EVENT_STATUS_SKIPPED = 3;
+  // Action event has been completed as all related operations are finished
+  ACTION_EVENT_STATUS_DONE = 4;
+}
+
+////////////////////////////////////////////////////////////////////////////////

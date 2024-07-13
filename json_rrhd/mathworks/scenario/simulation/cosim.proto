@@ -1,0 +1,649 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax = "proto3";
+
+package mathworks.scenario.simulation;
+
+import "mathworks/scenario/common/coordinate_system.proto";
+
+import "mathworks/scenario/scene/hd/hd_map.proto";
+import "mathworks/scenario/scene/hd/hd_map_header.proto"; 
+import "mathworks/scenario/simulation/actor.proto";
+import "mathworks/scenario/simulation/event.proto";
+import "mathworks/scenario/simulation/logging.proto";
+import "mathworks/scenario/simulation/phase_status.proto";
+import "mathworks/scenario/simulation/simulation_settings.proto";
+import "mathworks/scenario/simulation/simulation_status.proto";
+import "mathworks/scenario/common/geometry.proto";
+
+// Define the request and response messages in co-simulation related service calls.
+// These messages are shared by the CoSimulationMgr and CoSimulationApi services.
+
+//////////////////////////////////////
+// Shared message types
+//////////////////////////////////////
+
+// Request that a client sends for connecting with the co-simulation server
+message RegisterClientRequest
+{
+  // The id proposed by client; if non-empty,
+  // try to use it as client's id;
+  string proposed_client_id = 1;
+
+  // Name of the client
+  string name = 2;
+}
+
+// Response from the server that confirms the connection
+message RegisterClientResponse
+{
+  // The id assigned to the connecting client.
+  string client_id = 1;
+}
+
+// Request that notifies the completion of a cient-side operation
+message SetReadyRequest
+{
+  // The id of the client.
+  string client_id = 1;
+}
+
+// Response that acknowledge the reception of a SetReady call
+message SetReadyResponse
+{
+}
+
+// Request that indicates the client is performing but not yet complete a
+// client-side operation
+message SetBusyRequest
+{
+  // The id of the client.
+  string client_id = 1;
+  // An optional client status message
+  string status = 2;
+}
+
+// Response that acknowledge the reception of a SetBusy call
+message SetBusyResponse
+{
+}
+
+// Request to subscribe to the events that the co-simulation server publishes
+message SubscribeEventsRequest
+{
+  // The id of the client.
+  string client_id = 1;
+  
+  // Description of the client including its platform type and capabilities
+  ClientProfile client_profile = 2;
+}
+
+//
+// Outline of a client's properties and capabilities.
+//
+// Such as:
+// - Platform type of this client (e.g. MATLAB/Simulink)
+// - Whether the client processes events in a synchronous (or lock-step) fashion
+// - Whether the client is capable of simulating an actor of this platform
+//
+message ClientProfile
+{
+  // Platform type
+  oneof platform_type {
+    // RoadRunner platform
+    RoadRunnerPlatform roadrunner_platform = 1;
+    // Simulink platform
+    SimulinkPlatform simulink_platform = 2;
+    // External platform
+    ExternalPlatform external_platform = 3;
+  }
+
+  // Register the calling client as a synchronous client with the server.
+  // - The server will wait for the client to 'SetReady' during the update loop.
+  // - This field must be set to 'true' for a client to simulate actors.
+  bool synchronous = 4;
+
+  // Proposed timeout value (in milliseconds) for the client to process a
+  // synchronous event.
+  uint32 timeout_milliseconds = 5;
+
+  // Simulation capability
+  bool simulate_actors = 6;
+}
+
+// RoadRunner platform
+message RoadRunnerPlatform
+{  
+}
+
+// Simulink platform
+message SimulinkPlatform
+{
+}
+
+// External platform
+message ExternalPlatform
+{
+  string platform_name = 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Request/response messages for co-simulation management service
+////////////////////////////////////////////////////////////////////////////////
+
+message AddSimulationsRequest
+{
+  repeated SimulationSpec simulation_specs = 1;
+}
+
+message AddSimulationsResponse
+{
+}
+
+message RemoveSimulationsRequest
+{
+  bool is_forced = 1;
+  // When simulation_ids is empty, remove all the simulations. Otherwise, remove
+  // only the specified simulations.
+  repeated string simulation_ids = 2;
+}
+
+message RemoveSimulationsResponse
+{
+}
+
+// SimulationSpec contains all the data models needed to start a scenario simulation
+message SimulationSpec
+{
+  // Identifier for this simulation
+  string id = 1;
+
+  // HD map and its header 
+  MapAndHeader map_and_header = 2;
+
+  // Scenario model (SSD)
+  Actor world_actor = 3;
+
+  // Simulation settings
+  SimulationSettings simulation_settings = 4;
+}
+
+message GetSimulationServiceProfilesRequest
+{
+}
+
+message GetSimulationServiceProfilesResponse
+{
+  repeated SimulationServiceProfile simulation_service_profiles = 1;
+}
+
+enum SimulationServiceStatus
+{
+  SIMULATION_SERVICE_STATUS_UNSPECIFIED = 0;
+  SIMULATION_SERVICE_STATUS_NOT_LAUNCHED = 1;
+  SIMULATION_SERVICE_STATUS_LAUNCHING = 2;
+  SIMULATION_SERVICE_STATUS_LAUNCHED = 3;
+  SIMULATION_SERVICE_STATUS_ENDED = 4;
+}
+
+message SimulationServiceProfile
+{
+  // Identifier for the simulation
+  string simulation_id = 1;
+
+  // Current status of simulation service
+  SimulationServiceStatus simulation_service_status = 2;
+
+  // Address of co-simulation service provider
+  string simulation_service_address = 3;
+
+  // Port number of co-simulation service provider
+  uint32 simulation_service_port = 4;
+}
+
+message LaunchSimulationsRequest
+{ 
+}
+
+message LaunchSimulationsResponse
+{
+}
+
+message ResourceSpec
+{
+  // Maximal number of co-simulation servers this host can support
+  // - Each co-simulation server require a thread
+  uint32 max_num_cosim = 1;
+
+  // Lower bound (inclusive) of the port range available for co-simulation
+  uint32 min_simulation_service_port = 2;
+
+  // Upper bound (inclusive) of the port range available for co-Simulation
+  uint32 max_simulation_service_port = 3;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Request/response messages for co-simulation APIs
+////////////////////////////////////////////////////////////////////////////////
+
+message UploadMapRequest
+{
+  // HD Map and its header 
+  MapAndHeader map_and_header = 1;
+}
+
+message UploadMapResponse
+{
+}
+
+message DownloadMapRequest
+{
+}
+
+message DownloadMapResponse
+{
+  // HD Map and its header 
+  MapAndHeader map_and_header = 1;
+}
+
+message UploadScenarioRequest
+{
+  // This actor should have type 'World'.
+  Actor world_actor = 1;
+}
+
+message UploadScenarioResponse
+{
+}
+
+message DownloadScenarioRequest
+{
+}
+
+message DownloadScenarioResponse
+{
+  // Would be of type 'World'
+  Actor world_actor = 1;
+}
+
+message SetSimulationSettingsRequest
+{
+  SimulationSettings simulation_settings = 1;
+}
+
+message SetSimulationSettingsResponse
+{
+}
+
+// Service request to set simulation pacing options
+message SetSimulationPaceRequest
+{
+  // Turn pacer on or off (see SimulationSettings for details)
+  bool is_pacer_on = 1;
+  // Change simulation pace (see SimulationSettings for details)
+  double simulation_pace = 2;
+}
+
+message SetSimulationPaceResponse
+{
+}
+
+message GetSimulationSettingsRequest
+{
+}
+
+message GetSimulationSettingsResponse
+{
+  SimulationSettings simulation_settings = 1;
+}
+
+message StartSimulationRequest
+{
+  // Is simulation to start in single step mode? When set to true, simulation
+  // would start and pause immediately after taking one step. This can be helpful
+  // for debugging events that occur early during simulation.
+  bool single_stepping = 1;
+
+  // Mode in which simulation is to be run (ex: normal, replay etc.)
+  oneof simulation_mode {
+    // Start simulation in normal mode
+    NormalModeSimulation normal_mode_simulation = 101;
+    // Start simulation in replay mode
+    ReplayModeSimulation replay_mode_simulation = 102;
+  }
+}
+
+// Start simulation in replay mode
+message NormalModeSimulation
+{
+}
+
+// Start simulation in replay mode
+message ReplayModeSimulation
+{
+  // Path to the simulation log file to use in replay
+  string replay_file_path = 1;
+
+  // Actors to exclude from replay
+  repeated string excluded_ids = 2;
+}
+
+message StartSimulationResponse
+{
+}
+
+message RestartSimulationRequest
+{
+}
+
+message RestartSimulationResponse
+{
+}
+
+message StopSimulationRequest
+{
+  SimulationStopCause cause = 1;
+}
+
+message StopSimulationResponse
+{
+}
+
+message StepSimulationRequest
+{
+}
+
+message StepSimulationResponse
+{
+}
+
+message ToggleSimulationPausedRequest
+{
+  // Whether or not the simulation should be paused.
+  bool pause_simulation = 1;
+}
+
+message ToggleSimulationPausedResponse
+{
+}
+
+message GetSimulationStatusRequest
+{
+}
+
+message GetSimulationStatusResponse
+{
+  // Current simulation status (e.g., stopped, running, or paused)
+  SimulationStatus simulation_status = 1;
+}
+
+message GetSimulationTimeRequest
+{
+}
+
+message GetSimulationTimeResponse
+{
+  // Current simulation time in seconds
+  double simulation_time = 1;
+
+  // Number of steps taken since the start of the current simulation
+  int64 steps = 2;
+}
+
+message SetRuntimeActorsRequest
+{
+  // Actors whose state has changed since the last timestep.
+  repeated ActorRuntime actor_runtime = 1;
+}
+
+message SetRuntimeActorsResponse
+{
+}
+
+message SetActorPosesRequest
+{
+  // A list of requests, each for setting pose related attributes to one actor
+  repeated ActorPose actor_poses = 1;
+}
+
+message SetActorPosesResponse
+{
+}
+
+message SetVehiclePosesRequest
+{ 
+  // A list of requests, each for setting pose related attributes to one vehicle
+  repeated VehiclePose vehicle_poses = 1;
+}
+
+message SetVehiclePosesResponse
+{
+}
+
+message GetActorsRequest
+{
+}
+
+message GetActorsResponse
+{
+  repeated Actor actors = 1;
+}
+
+message GetRuntimeActorsRequest
+{
+}
+
+message GetRuntimeActorsResponse
+{
+  repeated ActorRuntime actor_runtime = 1;
+}
+
+message GetActorPosesRequest
+{
+  ReferenceFrame reference_frame = 1;
+  common.CoordinateSystemRef coordinate_system_ref = 2;
+}
+
+message GetActorPosesResponse
+{
+   repeated ActorPose actor_poses = 1;
+}
+
+message GetGeodeticCoordinateRequest
+{
+  common.CoordinateSystemRef source_coordinate_system = 1;
+  common.Vector3 source_coordinates = 2;
+}
+
+message GetGeodeticCoordinateResponse
+{
+  common.GeodeticCoordinates geodetic_coordinates = 1;
+}
+
+message NotifyActionCompleteRequest
+{
+  string action_id = 1;
+}
+
+message NotifyActionCompleteResponse
+{
+}
+
+message SendEventsRequest
+{
+  // To-be-emitted events
+  repeated Event events = 1;
+}
+
+message SendEventsResponse
+{  
+}
+
+message ReceiveEventsRequest
+{
+  // Optional logic event names to narrow down the look up
+  // - Non-empty: only logic events with the specified names are returned
+  // - Empty: all logic events are returned
+  repeated string event_names = 1;
+}
+
+message ReceiveEventsResponse
+{
+  // Results of logic event look up
+  // - Events are sorted by sender id in ascendering order: empty -> 1 -> 2 -> 3
+  // - Events from the same sender id are sorted in FIFO order:
+  // - Example: (0) sender id: empty
+  //            (1) sender id: 1, first
+  //            (2) sender id: 1, second
+  //            (3) sender id: 1, third
+  //            (4) sender id: 2, first
+  //            ...
+  repeated Event events = 1;
+}
+
+message GetPhaseStatusRequest
+{
+}
+
+message GetPhaseStatusResponse
+{
+  repeated PhaseStatus phase_status = 1;
+}
+
+//
+// MapAndHeader contains HD Map and its header meta data
+//
+message MapAndHeader
+{
+  mathworks.scenario.scene.hdmap.Header header = 1;
+  mathworks.scenario.scene.hdmap.HDMap map = 2;
+}
+
+// Clients can query the server for communication log. The clients can do so by:
+// 1. Specifying client_id, in which case all rpc calls invoked by that particular client
+//    are returned, plus all the events published by the server to that client (if the 
+//    client was an event subscriber).
+// 2. Specifying a published message type, in which case all messages published by the server
+//    to all the clients of the specified type are returned
+// 3. Specifying rpc message type, in which case all rpc requests invoked by clients
+//    of the specified rpc type are returned
+// 4. Specifying the start_time, in which case rpc and published messages from the specified 
+//    'start time' till the current (end) time are returned. If 'start time' falls outside of 
+//     the simulation time range, it is ignored.
+// 5. Specifying the end_time, in which case rpc and published messages from the start till 
+//     the specified 'end time' are returned. If 'end time' falls outside of the simulation
+//     time range, it is ignored.
+// 6. Or a combination of any of 1, 2, 3, 4 and 5. The response is:
+//     (1 OR 2 OR 3) AND 4 AND 5
+// 7. Specifying none of the above, in which case all messages are returned.
+message QueryCommunicationLogRequest
+{
+  string client_id = 1;
+  string publish_type = 2;
+  string rpc_type = 3;
+  TimeStamp start_time = 4;
+  TimeStamp end_time = 5;
+}
+
+// The response to the query that includes the communication log messages
+message QueryCommunicationLogResponse
+{
+  CommunicationLog communication_log = 1;
+}
+
+// Request to enable logging of gRPC communication exchange between client & server.
+// Defaults: Logging is not disabled. When enabled, there are no limits to the log size.
+message EnableCommunicationLoggingRequest
+{
+  // Whether or not communication logging should be enabled/disabled.
+  // default: disabled
+  bool log_communication = 1;
+
+  // The length (number of entries) to be maintained in the communication
+  // log. Can be 0 to indicate no limits (default).
+  uint32 log_buffer_length = 2;
+}
+
+message EnableCommunicationLoggingResponse
+{
+}
+
+// Clients can query the server for world runtime log. The clients can do so by:
+// 1. Specifying actor_id, in which case a chronological actor runtime log for that
+//    particular actor is returned.
+// 2. Specifying the start_time, in which case a chronological actor runtime log from 
+//    'start time' till the current (end) time are returned. If 'start time' falls outside
+//    the simulation time range, it is ignored.
+// 3. Specifying the end_time, in which case a chronological actor runtime log till 
+//     the specified 'end time' is returned. If 'end time' falls outside of the simulation
+//     time range, it is ignored.
+// 4. Or a combination of any of 1, 2, and 3. The response is:
+//     1 AND 2 AND 3
+// 5. Specifying none of the above, in which case the entire world runtime log is returned.
+message QueryWorldRuntimeLogRequest
+{
+  string actor_id = 1;
+  TimeStamp start_time = 2;
+  TimeStamp end_time = 3;
+}
+
+// The response to the world runtime query that includes the scenario state log
+message QueryWorldRuntimeLogResponse
+{
+  WorldRuntimeStateLog world_runtime_state_log = 1;
+}
+
+// By default actor runtime logging is disabled and when enabled, the default
+// buffer size if unlimited (0).
+message EnableWorldRuntimeLoggingRequest
+{
+  // Whether or not world runtime logging should be enabled/disabled.
+  bool log_world_runtime = 1;
+
+  // The length (number of entries) to be maintained in the world runtime
+  // log. Can be 0 to indicate no limits.
+  uint32 buffer_length = 2;
+}
+
+message EnableWorldRuntimeLoggingResponse
+{
+}
+
+message AddDiagnosticMessageRequest
+{
+    repeated DiagnosticMessage diagnostic_messages = 1;
+}
+
+message AddDiagnosticMessageResponse
+{
+}
+
+// Clients can query the server for diagnostic message log. The clients can do so by:
+// 1. Specifying client_id, in which case diagnostic message log for that particular
+//    client is returned.
+// 2. Specifying diagnostic type, in which case diagnostic messages of that particular
+//    type are returned.
+// 3. Specifying the start_time, in which case a chronological list of diagnostic messages
+//    from 'start time' till the current (end) time are returned. If 'start time' falls
+//    outside the simulation time range, it is ignored.
+// 4. Specifying the end_time, in which case a chronological list of diagnostic messages till 
+//     the specified 'end time' is returned. If 'end time' falls outside of the simulation
+//     time range, it is ignored.
+// 5. Or a combination of any of 1, 2, 3 and 4. The response is:
+//     1 AND 2 AND 3 AND 4
+// 6. Specifying none of the above, in which case the entire actor runtime log is returned.
+//
+// All diagnostic messages are stored and logging is always enabled
+message QueryDiagnosticMessageLogRequest
+{
+  string client_id = 1;
+  DiagnosticType diagnostic_type = 2;
+  TimeStamp start_time = 3;
+  TimeStamp end_time = 4;
+}
+
+// The response to the diagnostic message query
+message QueryDiagnosticMessageLogResponse
+{
+  DiagnosticMessageLog diagnostic_message_log = 1;
+}

@@ -1,0 +1,107 @@
+// Copyright (c) 2021, The MathWorks, Inc.
+
+syntax="proto3";
+
+package mathworks.scenario.common;
+
+////////////////////////////////////////////////////////////////////////////////
+// This proto file defines a dynamic data format that can represent general 
+// MATLAB data, including number, char, string, struct, array and cell. 
+////////////////////////////////////////////////////////////////////////////////
+
+//
+// Data represents a dynamic MATLAB data element.
+// It can be an Array, Cell, or Struct.
+//
+message Data
+{
+  oneof type
+  {
+    Array array_element = 1;
+    Cell cell_element = 2;
+    Struct struct_element = 3;
+  }
+}
+
+//
+// Array containing elements of the same type.
+//
+message Array
+{
+  repeated uint64 dimensions = 1;
+  repeated Value elements = 2;
+}
+
+//
+// Cell, elements can have different types. 
+//
+message Cell
+{
+  repeated uint64 dimensions = 1;
+  repeated Data elements = 2;
+}
+
+//
+// Struct, can be nested.
+//
+message Struct
+{
+  repeated string names = 1;
+  repeated Data elements = 2;
+}
+
+//
+// Value represents a MATLAB array element.
+// It cannot be nested with Array and doesn't contain Cell.
+//
+message Value
+{
+  oneof type
+  {
+    Number number_element = 1;
+    Complex complex_element = 2;
+    bool logical_element = 3;
+    uint32 char_element = 4;
+    String string_element_deprecated = 5;
+    Struct struct_element = 6;
+    string string_element = 7;
+  }
+}
+
+//
+// There is no int8 or int16 data type in protobuf.
+// Use 32 bits data type to store it.
+//
+message Number
+{
+  oneof type
+  {
+    uint32 uint8_element = 1;
+    int32 int8_element = 2;
+    uint32 uint16_element = 3;
+    int32 int16_element = 4;
+    uint32 uint32_element = 5;
+    int32 int32_element = 6;
+    uint64 uint64_element = 7;
+    int64 int64_element = 8;
+    float single_element = 9;
+    double double_element = 10;
+  }
+}
+
+//
+// Complex number
+//
+message Complex
+{
+  Number real_element = 1 ;
+  Number imag_element = 2;
+}
+
+//
+// String (UTF-16)
+//
+message String
+{
+  repeated uint32 elements = 1;
+}
